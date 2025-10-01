@@ -1,0 +1,99 @@
+.book-consultation-page {
+  min-height: calc(100vh - 80px);
+  padding: 40px 20px;
+  background: white;
+}
+
+.booking-container {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: 32px;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.doctor-summary {
+  text-align: center;
+  height: fit-content;
+  position: sticky;
+  top: 100px;
+}
+
+.doctor-image-large {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  margin-bottom: 16px;
+  background: #f3f4f6;
+}
+
+.doctor-summary h2 {
+  font-size: 24px;
+  color: #1f2937;
+  margin-bottom: 8px;
+}
+
+.doctor-summary .specialty {
+  color: #667eea;
+  font-weight: 600;
+  margin-bottom: 20px;
+}
+
+.doctor-meta {
+  padding-top: 20px;
+  border-top: 1px solid #e5e7eb;
+  text-align: left;
+}
+
+.doctor-meta p {
+  color: #6b7280;
+  margin-bottom: 8px;
+}
+
+.booking-form h2 {
+  font-size: 28px;
+  color: #1f2937;
+  margin-bottom: 24px;
+}
+
+.booking-form label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.success-message {
+  text-align: center;
+  padding: 60px 20px;
+}
+
+.success-message h2 {
+  color: #10b981;
+  margin: 24px 0 12px;
+  font-size: 32px;
+}
+
+.success-message p {
+  color: #6b7280;
+  font-size: 18px;
+}
+
+@media (max-width: 768px) {
+  .booking-container {
+    grid-template-columns: 1fr;
+  }
+
+  .doctor-summary {
+    position: static;
+  }
+
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+}

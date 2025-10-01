@@ -1,0 +1,82 @@
+.doctors-page {
+  min-height: calc(100vh - 80px);
+  padding: 40px 20px;
+  background: white;
+}
+
+.page-header {
+  text-align: center;
+  margin-bottom: 48px;
+}
+
+.page-header h1 {
+  font-size: 36px;
+  color: #1f2937;
+  margin-bottom: 12px;
+}
+
+.page-header p {
+  font-size: 18px;
+  color: #6b7280;
+}
+
+.doctor-card {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.doctor-header {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+}
+
+.doctor-image {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: #f3f4f6;
+}
+
+.doctor-info h3 {
+  font-size: 20px;
+  color: #1f2937;
+  margin-bottom: 4px;
+}
+
+.specialty {
+  color: #667eea;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.rating {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: #1f2937;
+  font-weight: 600;
+}
+
+.doctor-details {
+  padding-top: 12px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.doctor-details p {
+  color: #6b7280;
+  margin-bottom: 8px;
+}
+
+.loading,
+.error {
+  font-size: 18px;
+  color: #6b7280;
+  padding: 40px;
+  text-align: center;
+}
+
+.error {
+  color: #dc2626;
+}

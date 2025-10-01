@@ -1,0 +1,102 @@
+.consultations-page {
+  min-height: calc(100vh - 80px);
+  padding: 40px 20px;
+  background: white;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 80px 40px;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.empty-state h3 {
+  font-size: 24px;
+  color: #1f2937;
+  margin: 24px 0 12px;
+}
+
+.empty-state p {
+  color: #6b7280;
+  margin-bottom: 32px;
+  line-height: 1.6;
+}
+
+.consultations-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.consultation-card {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.consultation-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.consultation-header h3 {
+  font-size: 20px;
+  color: #1f2937;
+  margin-bottom: 4px;
+}
+
+.consultation-header .specialty {
+  color: #667eea;
+  font-weight: 600;
+}
+
+.consultation-details {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.detail-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #6b7280;
+}
+
+.consultation-symptoms {
+  padding: 16px;
+  background: #f9fafb;
+  border-radius: 8px;
+}
+
+.consultation-symptoms p {
+  color: #4b5563;
+  margin-top: 8px;
+  line-height: 1.6;
+}
+
+.consultation-footer {
+  padding-top: 16px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.consultation-footer small {
+  color: #9ca3af;
+}
+
+@media (max-width: 768px) {
+  .consultation-details {
+    grid-template-columns: 1fr;
+  }
+
+  .consultation-header {
+    flex-direction: column;
+    gap: 12px;
+  }
+}
