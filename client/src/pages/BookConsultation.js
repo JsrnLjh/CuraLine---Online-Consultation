@@ -138,7 +138,7 @@ function BookConsultation() {
                   name="patientPhone"
                   value={formData.patientPhone}
                   onChange={handleChange}
-                  placeholder="+1 (555) 000-0000"
+                  placeholder="+63 9123456789"
                 />
               </div>
 
