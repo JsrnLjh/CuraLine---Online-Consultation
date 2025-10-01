@@ -24,7 +24,7 @@ function Home() {
           </div>
         </div>
       </section>
-
+      
       <section className="features">
         <div className="container">
           <h2>Why Choose CuraLine?</h2>

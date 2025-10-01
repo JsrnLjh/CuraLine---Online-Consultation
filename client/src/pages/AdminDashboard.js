@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import axios from 'axios';
 import { 
   Calendar as CalendarIcon, 
@@ -8,7 +9,8 @@ import {
   Clock,
   CheckCircle,
   XCircle,
-  BarChart3
+  BarChart3,
+  Settings
 } from 'lucide-react';
 import './AdminDashboard.css';
 import CalendarView from '../components/CalendarView';
@@ -57,21 +59,27 @@ function AdminDashboard() {
             <h1>Admin Dashboard</h1>
             <p>Monitor and manage your healthcare platform</p>
           </div>
-          <div className="view-toggle">
-            <button 
-              className={`toggle-btn ${activeView === 'overview' ? 'active' : ''}`}
-              onClick={() => setActiveView('overview')}
-            >
-              <BarChart3 size={20} />
-              Overview
-            </button>
-            <button 
-              className={`toggle-btn ${activeView === 'calendar' ? 'active' : ''}`}
-              onClick={() => setActiveView('calendar')}
-            >
-              <CalendarIcon size={20} />
-              Calendar
-            </button>
+          <div className="header-actions">
+            <Link to="/admin/management" className="btn btn-secondary">
+              <Settings size={20} />
+              Manage Users & Doctors
+            </Link>
+            <div className="view-toggle">
+              <button 
+                className={`toggle-btn ${activeView === 'overview' ? 'active' : ''}`}
+                onClick={() => setActiveView('overview')}
+              >
+                <BarChart3 size={20} />
+                Overview
+              </button>
+              <button 
+                className={`toggle-btn ${activeView === 'calendar' ? 'active' : ''}`}
+                onClick={() => setActiveView('calendar')}
+              >
+                <CalendarIcon size={20} />
+                Calendar
+              </button>
+            </div>
           </div>
         </div>
 

@@ -11,6 +11,7 @@ import Doctors from './pages/Doctors';
 import BookConsultation from './pages/BookConsultation';
 import MyConsultations from './pages/MyConsultations';
 import AdminDashboard from './pages/AdminDashboard';
+import AdminManagement from './pages/AdminManagement';
 
 function App() {
   return (
@@ -59,12 +60,21 @@ function App() {
               </ProtectedRoute>
             } />
             
-            {/* Doctor-only route */}
+            {/* Doctor-only routes */}
             <Route path="/admin" element={
               <ProtectedRoute requireDoctor={true}>
                 <>
                   <Header />
                   <AdminDashboard />
+                </>
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/admin/management" element={
+              <ProtectedRoute requireDoctor={true}>
+                <>
+                  <Header />
+                  <AdminManagement />
                 </>
               </ProtectedRoute>
             } />

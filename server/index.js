@@ -19,8 +19,14 @@ const doctors = [
     specialty: 'General Practitioner',
     experience: '10 years',
     rating: 4.8,
+    reviews: 156,
+    consultationFee: 500,
     availability: ['09:00', '10:00', '11:00', '14:00', '15:00', '16:00'],
-    image: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Sarah'
+    image: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Sarah',
+    bio: 'Board-certified General Practitioner with over 10 years of experience in primary care. Specialized in preventive medicine and chronic disease management.',
+    education: 'MD - University of the Philippines Manila',
+    languages: ['English', 'Filipino', 'Tagalog'],
+    certifications: ['Board Certified in Family Medicine', 'Advanced Cardiac Life Support (ACLS)']
   },
   {
     id: '2',
@@ -28,8 +34,14 @@ const doctors = [
     specialty: 'Cardiologist',
     experience: '15 years',
     rating: 4.9,
+    reviews: 203,
+    consultationFee: 800,
     availability: ['10:00', '11:00', '14:00', '15:00'],
-    image: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Michael'
+    image: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Michael',
+    bio: 'Expert Cardiologist specializing in interventional cardiology and heart disease prevention. Published researcher in cardiovascular medicine.',
+    education: 'MD - Ateneo School of Medicine, Fellowship - Johns Hopkins Hospital',
+    languages: ['English', 'Mandarin', 'Filipino'],
+    certifications: ['Board Certified in Cardiology', 'Interventional Cardiology Specialist', 'Echocardiography Certification']
   },
   {
     id: '3',
@@ -37,8 +49,14 @@ const doctors = [
     specialty: 'Dermatologist',
     experience: '8 years',
     rating: 4.7,
+    reviews: 128,
+    consultationFee: 600,
     availability: ['09:00', '10:00', '13:00', '14:00', '16:00'],
-    image: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Emily'
+    image: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Emily',
+    bio: 'Dermatologist with expertise in medical and cosmetic dermatology. Passionate about helping patients achieve healthy, beautiful skin.',
+    education: 'MD - University of Santo Tomas, Residency - St. Luke\'s Medical Center',
+    languages: ['English', 'Spanish', 'Filipino'],
+    certifications: ['Board Certified in Dermatology', 'Cosmetic Dermatology Certification', 'Laser Treatment Specialist']
   },
   {
     id: '4',
@@ -46,8 +64,14 @@ const doctors = [
     specialty: 'Pediatrician',
     experience: '12 years',
     rating: 4.9,
+    reviews: 187,
+    consultationFee: 550,
     availability: ['09:00', '11:00', '14:00', '15:00', '16:00'],
-    image: 'https://api.dicebear.com/7.x/avataaars/svg?seed=James'
+    image: 'https://api.dicebear.com/7.x/avataaars/svg?seed=James',
+    bio: 'Dedicated Pediatrician committed to providing comprehensive healthcare for children from infancy through adolescence.',
+    education: 'MD - Far Eastern University, Residency - Philippine Children\'s Medical Center',
+    languages: ['English', 'Filipino'],
+    certifications: ['Board Certified in Pediatrics', 'Pediatric Advanced Life Support (PALS)', 'Neonatal Resuscitation Program (NRP)']
   }
 ];
 
@@ -361,6 +385,144 @@ app.get('/api/analytics/consultations-by-date', (req, res) => {
       .map(([date, count]) => ({ date, count }))
       .sort((a, b) => new Date(a.date) - new Date(b.date))
   );
+});
+
+// Admin Management Endpoints
+
+// Get all users (Admin only)
+app.get('/api/admin/users', (req, res) => {
+  // Return users without passwords
+  const usersWithoutPasswords = users.map(({ password, ...user }) => user);
+  res.json(usersWithoutPasswords);
+});
+
+// Update user (Admin only)
+app.put('/api/admin/users/:id', (req, res) => {
+  const { id } = req.params;
+  const { name, email, phone, role } = req.body;
+
+  const userIndex = users.findIndex(u => u.id === id);
+  
+  if (userIndex === -1) {
+    return res.status(404).json({ message: 'User not found' });
+  }
+
+  // Check if email is already taken by another user
+  const emailExists = users.find(u => u.email === email && u.id !== id);
+  if (emailExists) {
+    return res.status(400).json({ message: 'Email already in use' });
+  }
+
+  // Update user
+  users[userIndex] = {
+    ...users[userIndex],
+    name,
+    email,
+    phone,
+    role
+  };
+
+  const { password, ...userWithoutPassword } = users[userIndex];
+  res.json(userWithoutPassword);
+});
+
+// Delete user (Admin only)
+app.delete('/api/admin/users/:id', (req, res) => {
+  const { id } = req.params;
+  const userIndex = users.findIndex(u => u.id === id);
+  
+  if (userIndex === -1) {
+    return res.status(404).json({ message: 'User not found' });
+  }
+
+  users.splice(userIndex, 1);
+  res.json({ message: 'User deleted successfully' });
+});
+
+// Add new doctor (Admin only)
+app.post('/api/admin/doctors', (req, res) => {
+  const { name, specialty, experience, rating, consultationFee, bio, education, languages, certifications, availability } = req.body;
+
+  if (!name || !specialty || !experience) {
+    return res.status(400).json({ message: 'Missing required fields' });
+  }
+
+  const newDoctor = {
+    id: (doctors.length + 1).toString(),
+    name,
+    specialty,
+    experience,
+    rating: rating || 4.5,
+    reviews: 0,
+    consultationFee: consultationFee || 500,
+    availability: availability || ['09:00', '10:00', '11:00', '14:00', '15:00', '16:00'],
+    image: `https://api.dicebear.com/7.x/avataaars/svg?seed=${name}`,
+    bio: bio || '',
+    education: education || '',
+    languages: languages || ['English', 'Filipino'],
+    certifications: certifications || []
+  };
+
+  doctors.push(newDoctor);
+  res.status(201).json(newDoctor);
+});
+
+// Update doctor (Admin only)
+app.put('/api/admin/doctors/:id', (req, res) => {
+  const { id } = req.params;
+  const updates = req.body;
+
+  const doctorIndex = doctors.findIndex(d => d.id === id);
+  
+  if (doctorIndex === -1) {
+    return res.status(404).json({ message: 'Doctor not found' });
+  }
+
+  doctors[doctorIndex] = {
+    ...doctors[doctorIndex],
+    ...updates
+  };
+
+  res.json(doctors[doctorIndex]);
+});
+
+// Delete doctor (Admin only)
+app.delete('/api/admin/doctors/:id', (req, res) => {
+  const { id } = req.params;
+  const doctorIndex = doctors.findIndex(d => d.id === id);
+  
+  if (doctorIndex === -1) {
+    return res.status(404).json({ message: 'Doctor not found' });
+  }
+
+  doctors.splice(doctorIndex, 1);
+  res.json({ message: 'Doctor deleted successfully' });
+});
+
+// Reschedule consultation
+app.patch('/api/consultations/:id/reschedule', (req, res) => {
+  const { id } = req.params;
+  const { date, time } = req.body;
+
+  if (!date || !time) {
+    return res.status(400).json({ message: 'Date and time are required' });
+  }
+
+  const consultation = consultations.find(c => c.id === id);
+  
+  if (!consultation) {
+    return res.status(404).json({ message: 'Consultation not found' });
+  }
+
+  if (consultation.status === 'cancelled') {
+    return res.status(400).json({ message: 'Cannot reschedule a cancelled consultation' });
+  }
+
+  consultation.date = date;
+  consultation.time = time;
+  consultation.rescheduledAt = new Date().toISOString();
+
+  res.json(consultation);
 });
 
 // Health check

@@ -1,19 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { Calendar, Clock, User, Mail, Phone, FileText, CheckCircle } from 'lucide-react';
+import { Calendar, Clock, User, Mail, Phone, FileText, CheckCircle, ArrowLeft, DollarSign } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 import './BookConsultation.css';
 
 function BookConsultation() {
   const { doctorId } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [doctor, setDoctor] = useState(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [step, setStep] = useState(1); // 1: Form, 2: Confirmation
   const [formData, setFormData] = useState({
-    patientName: '',
-    patientEmail: '',
+    patientName: user?.name || '',
+    patientEmail: user?.email || '',
     patientPhone: '',
     date: '',
     time: '',
@@ -22,6 +25,7 @@ function BookConsultation() {
 
   useEffect(() => {
     fetchDoctor();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [doctorId]);
 
   const fetchDoctor = async () => {
@@ -42,8 +46,23 @@ function BookConsultation() {
     });
   };
 
-  const handleSubmit = async (e) => {
+  const handleTimeSelect = (time) => {
+    setFormData({
+      ...formData,
+      time: time
+    });
+  };
+
+  const handleContinue = (e) => {
     e.preventDefault();
+    setStep(2); // Go to confirmation
+  };
+
+  const handleBack = () => {
+    setStep(1);
+  };
+
+  const handleSubmit = async () => {
     setSubmitting(true);
 
     try {
@@ -54,10 +73,11 @@ function BookConsultation() {
       setSuccess(true);
       setTimeout(() => {
         navigate('/consultations');
-      }, 2000);
+      }, 3000);
     } catch (err) {
       alert('Failed to book consultation. Please try again.');
       setSubmitting(false);
+      setStep(1);
     }
   };
 
@@ -71,11 +91,34 @@ function BookConsultation() {
 
   if (success) {
     return (
-      <div className="container" style={{ padding: '60px 20px' }}>
-        <div className="success-message">
-          <CheckCircle size={64} color="#10b981" />
-          <h2>Consultation Booked Successfully!</h2>
-          <p>Redirecting to your consultations...</p>
+      <div className="book-consultation-page">
+        <div className="container">
+          <div className="success-page card">
+            <CheckCircle size={80} color="#10b981" />
+            <h2>Consultation Booked Successfully!</h2>
+            <p>Your appointment has been confirmed</p>
+            
+            <div className="success-details">
+              <div className="success-item">
+                <strong>Doctor:</strong> {doctor.name}
+              </div>
+              <div className="success-item">
+                <strong>Date:</strong> {new Date(formData.date).toLocaleDateString()}
+              </div>
+              <div className="success-item">
+                <strong>Time:</strong> {formData.time}
+              </div>
+              <div className="success-item">
+                <strong>Fee:</strong> ₱{doctor.consultationFee}
+              </div>
+            </div>
+
+            <p className="redirect-text">Redirecting to your consultations...</p>
+            
+            <button onClick={() => navigate('/consultations')} className="btn btn-primary">
+              View My Consultations
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -96,8 +139,23 @@ function BookConsultation() {
           </div>
 
           <div className="booking-form card">
-            <h2>Book Your Consultation</h2>
-            <form onSubmit={handleSubmit}>
+            {/* Step Indicator */}
+            <div className="step-indicator">
+              <div className={`step ${step >= 1 ? 'active' : ''}`}>
+                <span className="step-number">1</span>
+                <span className="step-label">Details</span>
+              </div>
+              <div className="step-line"></div>
+              <div className={`step ${step >= 2 ? 'active' : ''}`}>
+                <span className="step-number">2</span>
+                <span className="step-label">Confirm</span>
+              </div>
+            </div>
+
+            {step === 1 ? (
+              <>
+                <h2>Book Your Consultation</h2>
+                <form onSubmit={handleContinue}>
               <div className="form-group">
                 <label>
                   <User size={18} />
@@ -193,10 +251,76 @@ function BookConsultation() {
                 />
               </div>
 
-              <button type="submit" className="btn btn-primary" disabled={submitting} style={{ width: '100%', justifyContent: 'center' }}>
-                {submitting ? 'Booking...' : 'Confirm Booking'}
+              <button type="submit" className="btn btn-primary" style={{ width: '100%', justifyContent: 'center' }}>
+                Continue to Confirmation
               </button>
             </form>
+              </>
+            ) : (
+              <>
+                <button onClick={handleBack} className="btn btn-secondary" style={{ marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <ArrowLeft size={20} />
+                  Back
+                </button>
+                <h2>Confirm Your Booking</h2>
+                <div className="confirmation-details">
+                  <div className="confirm-section">
+                    <h3>Patient Information</h3>
+                    <div className="confirm-item">
+                      <strong>Name:</strong> {formData.patientName}
+                    </div>
+                    <div className="confirm-item">
+                      <strong>Email:</strong> {formData.patientEmail}
+                    </div>
+                    {formData.patientPhone && (
+                      <div className="confirm-item">
+                        <strong>Phone:</strong> {formData.patientPhone}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="confirm-section">
+                    <h3>Appointment Details</h3>
+                    <div className="confirm-item">
+                      <strong>Doctor:</strong> {doctor.name}
+                    </div>
+                    <div className="confirm-item">
+                      <strong>Specialty:</strong> {doctor.specialty}
+                    </div>
+                    <div className="confirm-item">
+                      <strong>Date:</strong> {new Date(formData.date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                    </div>
+                    <div className="confirm-item">
+                      <strong>Time:</strong> {formData.time}
+                    </div>
+                    {formData.symptoms && (
+                      <div className="confirm-item">
+                        <strong>Reason:</strong> {formData.symptoms}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="confirm-section fee-section">
+                    <div className="fee-item">
+                      <DollarSign size={24} />
+                      <div>
+                        <strong>Consultation Fee</strong>
+                        <p className="fee-amount">₱{doctor.consultationFee}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <button 
+                  onClick={handleSubmit} 
+                  className="btn btn-primary" 
+                  disabled={submitting}
+                  style={{ width: '100%', justifyContent: 'center' }}
+                >
+                  {submitting ? 'Booking...' : 'Confirm & Book Appointment'}
+                </button>
+              </>
+            )}
           </div>
         </div>
       </div>
