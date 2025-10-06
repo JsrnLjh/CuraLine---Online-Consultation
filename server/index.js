@@ -12,6 +12,7 @@ const Notification = require('./models/Notification');
 const Payment = require('./models/Payment');
 const Prescription = require('./models/Prescription');
 const Message = require('./models/Message');
+const PasswordReset = require('./models/PasswordReset');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -193,6 +194,119 @@ app.post('/api/auth/change-password', async (req, res) => {
     res.json({ message: 'Password changed successfully' });
   } catch (err) {
     console.error('Change password error:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Forgot password - Send reset link
+app.post('/api/auth/forgot-password', async (req, res) => {
+  const { email } = req.body;
+
+  if (!email) {
+    return res.status(400).json({ message: 'Email is required' });
+  }
+
+  try {
+    const user = await User.findOne({ email });
+    if (!user) {
+      // Don't reveal if email exists or not for security
+      return res.json({ message: 'If that email exists, a reset link has been sent' });
+    }
+
+    // Generate reset token
+    const resetToken = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}-${user._id}`;
+    
+    // Set expiration to 1 hour from now
+    const expiresAt = new Date(Date.now() + 3600000); // 1 hour
+
+    // Create password reset record
+    await PasswordReset.create({
+      userId: user._id,
+      email: user.email,
+      token: resetToken,
+      expiresAt
+    });
+
+    // Send email with reset link
+    const resetLink = `http://localhost:3000/reset-password/${resetToken}`;
+    sendEmail(
+      user.email,
+      'Password Reset Request - CuraLine',
+      `
+        <h2>Password Reset Request</h2>
+        <p>Hello ${user.name},</p>
+        <p>You requested to reset your password. Click the link below to reset it:</p>
+        <p><a href="${resetLink}" style="display: inline-block; padding: 12px 24px; background: #667eea; color: white; text-decoration: none; border-radius: 6px;">Reset Password</a></p>
+        <p>Or copy and paste this link into your browser:</p>
+        <p>${resetLink}</p>
+        <p>This link will expire in 1 hour.</p>
+        <p>If you didn't request this, please ignore this email.</p>
+        <p>Best regards,<br>CuraLine Team</p>
+      `
+    );
+
+    res.json({ message: 'If that email exists, a reset link has been sent' });
+  } catch (err) {
+    console.error('Forgot password error:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Reset password - Update password with token
+app.post('/api/auth/reset-password', async (req, res) => {
+  const { token, password } = req.body;
+
+  if (!token || !password) {
+    return res.status(400).json({ message: 'Token and password are required' });
+  }
+
+  if (password.length < 6) {
+    return res.status(400).json({ message: 'Password must be at least 6 characters' });
+  }
+
+  try {
+    // Find reset token
+    const resetRecord = await PasswordReset.findOne({ 
+      token,
+      used: false,
+      expiresAt: { $gt: new Date() }
+    });
+
+    if (!resetRecord) {
+      return res.status(400).json({ message: 'Invalid or expired reset link' });
+    }
+
+    // Find user
+    const user = await User.findById(resetRecord.userId);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Update password (will be hashed automatically)
+    user.password = password;
+    await user.save();
+
+    // Mark token as used
+    resetRecord.used = true;
+    await resetRecord.save();
+
+    // Send confirmation email
+    sendEmail(
+      user.email,
+      'Password Reset Successful - CuraLine',
+      `
+        <h2>Password Reset Successful</h2>
+        <p>Hello ${user.name},</p>
+        <p>Your password has been successfully reset.</p>
+        <p>You can now login with your new password.</p>
+        <p>If you didn't make this change, please contact us immediately.</p>
+        <p>Best regards,<br>CuraLine Team</p>
+      `
+    );
+
+    res.json({ message: 'Password reset successfully' });
+  } catch (err) {
+    console.error('Reset password error:', err);
     res.status(500).json({ message: 'Server error' });
   }
 });

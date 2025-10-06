@@ -17,6 +17,8 @@ import DoctorDashboard from './pages/DoctorDashboard';
 import Profile from './pages/Profile';
 import ConsultationRoom from './pages/ConsultationRoom';
 import Payment from './pages/Payment';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
 
 function App() {
   return (
@@ -28,6 +30,8 @@ function App() {
             {/* Public routes */}
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password/:token" element={<ResetPassword />} />
             
             {/* Protected routes */}
             <Route path="/" element={
