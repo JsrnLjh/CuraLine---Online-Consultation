@@ -41,13 +41,13 @@ function Header() {
           </Link>
           <Link to="/consultations" className={`nav-link ${isActive('/consultations')}`}>
             <Calendar size={20} />
-            <span>My Consultations</span>
+            <span>Consultations</span>
           </Link>
           {isDoctor() && (
             <>
               <Link to="/doctor/appointments" className={`nav-link ${isActive('/doctor/appointments')}`}>
                 <Stethoscope size={20} />
-                <span>My Appointments</span>
+                <span>Appointments</span>
               </Link>
               <Link to="/admin" className={`nav-link ${isActive('/admin')}`}>
                 <LayoutDashboard size={20} />
