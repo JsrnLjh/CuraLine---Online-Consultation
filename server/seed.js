@@ -13,15 +13,7 @@ const seedDatabase = async () => {
 
     console.log('🗑️  Cleared existing data');
 
-    // Create test users
-    const adminDoctor = await User.create({
-      name: 'Admin Doctor',
-      email: 'admin@example.com',
-      phone: '+1234567890',
-      password: 'admin123',
-      role: 'doctor'
-    });
-
+    // Create test patient
     const testPatient = await User.create({
       name: 'Test Patient',
       email: 'patient@example.com',
@@ -30,9 +22,42 @@ const seedDatabase = async () => {
       role: 'patient'
     });
 
-    console.log('✅ Created test users');
+    // Create individual user accounts for each doctor
+    const drSarahUser = await User.create({
+      name: 'Dr. Sarah Johnson',
+      email: 'sarah.johnson@curaline.com',
+      phone: '+63-917-123-4567',
+      password: 'sarah123',
+      role: 'doctor'
+    });
 
-    // Create doctors
+    const drMichaelUser = await User.create({
+      name: 'Dr. Michael Chen',
+      email: 'michael.chen@curaline.com',
+      phone: '+63-917-234-5678',
+      password: 'michael123',
+      role: 'doctor'
+    });
+
+    const drEmilyUser = await User.create({
+      name: 'Dr. Emily Rodriguez',
+      email: 'emily.rodriguez@curaline.com',
+      phone: '+63-917-345-6789',
+      password: 'emily123',
+      role: 'doctor'
+    });
+
+    const drJamesUser = await User.create({
+      name: 'Dr. James Anderson',
+      email: 'james.anderson@curaline.com',
+      phone: '+63-917-456-7890',
+      password: 'james123',
+      role: 'doctor'
+    });
+
+    console.log('✅ Created user accounts for all doctors');
+
+    // Create doctor profiles linked to user accounts
     const doctors = [
       {
         name: 'Dr. Sarah Johnson',
@@ -47,7 +72,7 @@ const seedDatabase = async () => {
         languages: ['English', 'Filipino', 'Tagalog'],
         certifications: ['Board Certified in Family Medicine', 'Advanced Cardiac Life Support (ACLS)', 'Pediatric Advanced Life Support (PALS)'],
         availability: ['09:00', '10:00', '11:00', '14:00', '15:00', '16:00'],
-        userId: adminDoctor._id
+        userId: drSarahUser._id
       },
       {
         name: 'Dr. Michael Chen',
@@ -61,7 +86,8 @@ const seedDatabase = async () => {
         education: 'MD - Ateneo School of Medicine, Fellowship - Johns Hopkins Hospital',
         languages: ['English', 'Mandarin', 'Filipino'],
         certifications: ['Board Certified in Cardiology', 'Fellow of the American College of Cardiology', 'Interventional Cardiology Certification'],
-        availability: ['09:00', '10:00', '13:00', '14:00', '15:00']
+        availability: ['09:00', '10:00', '13:00', '14:00', '15:00'],
+        userId: drMichaelUser._id
       },
       {
         name: 'Dr. Emily Rodriguez',
@@ -75,7 +101,8 @@ const seedDatabase = async () => {
         education: 'MD - University of Santo Tomas, Dermatology Residency - St. Luke\'s Medical Center',
         languages: ['English', 'Spanish', 'Filipino'],
         certifications: ['Board Certified in Dermatology', 'Cosmetic Dermatology Certificate', 'Laser Surgery Certification'],
-        availability: ['10:00', '11:00', '13:00', '14:00', '15:00', '16:00']
+        availability: ['10:00', '11:00', '13:00', '14:00', '15:00', '16:00'],
+        userId: drEmilyUser._id
       },
       {
         name: 'Dr. James Anderson',
@@ -89,16 +116,22 @@ const seedDatabase = async () => {
         education: 'MD - Far Eastern University, Residency - Philippine Children\'s Medical Center',
         languages: ['English', 'Filipino'],
         certifications: ['Board Certified in Pediatrics', 'Pediatric Advanced Life Support (PALS)', 'Neonatal Resuscitation Program (NRP)'],
-        availability: ['09:00', '10:00', '11:00', '13:00', '14:00', '15:00', '16:00']
+        availability: ['09:00', '10:00', '11:00', '13:00', '14:00', '15:00', '16:00'],
+        userId: drJamesUser._id
       }
     ];
 
     await Doctor.insertMany(doctors);
 
-    console.log('✅ Created doctors');
-    console.log('\n📝 Test Accounts:');
-    console.log('   Admin/Doctor: admin@example.com / admin123');
-    console.log('   Patient: patient@example.com / patient123');
+    console.log('✅ Created doctor profiles');
+    console.log('\n📝 Login Credentials:');
+    console.log('\n👨‍⚕️ Doctor Accounts:');
+    console.log('   Dr. Sarah Johnson: sarah.johnson@curaline.com / sarah123');
+    console.log('   Dr. Michael Chen: michael.chen@curaline.com / michael123');
+    console.log('   Dr. Emily Rodriguez: emily.rodriguez@curaline.com / emily123');
+    console.log('   Dr. James Anderson: james.anderson@curaline.com / james123');
+    console.log('\n👤 Patient Account:');
+    console.log('   Test Patient: patient@example.com / patient123');
     console.log('\n✅ Database seeded successfully!');
 
     process.exit(0);

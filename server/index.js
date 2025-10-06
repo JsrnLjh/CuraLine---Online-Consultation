@@ -495,11 +495,40 @@ app.get('/api/analytics/stats', async (req, res) => {
       createdAt: { $gte: today }
     });
 
+    // Get weekly patients (last 7 days)
+    const weekAgo = new Date();
+    weekAgo.setDate(weekAgo.getDate() - 7);
+    const weeklyPatients = await User.countDocuments({
+      role: 'patient',
+      createdAt: { $gte: weekAgo }
+    });
+
+    // Get consultation status counts
+    const scheduledCount = await Consultation.countDocuments({ status: 'scheduled' });
+    const completedCount = await Consultation.countDocuments({ status: 'completed' });
+    const cancelledCount = await Consultation.countDocuments({ status: 'cancelled' });
+
+    // Format response to match frontend expectations
     res.json({
-      totalPatients,
-      totalDoctors,
-      totalConsultations,
-      todayConsultations
+      consultations: {
+        total: totalConsultations,
+        today: todayConsultations,
+        scheduled: scheduledCount,
+        completed: completedCount,
+        cancelled: cancelledCount
+      },
+      patients: {
+        total: totalPatients,
+        weekly: weeklyPatients
+      },
+      doctors: {
+        total: totalDoctors
+      },
+      status: {
+        scheduled: scheduledCount,
+        completed: completedCount,
+        cancelled: cancelledCount
+      }
     });
   } catch (err) {
     console.error('Get stats error:', err);
@@ -510,7 +539,12 @@ app.get('/api/analytics/stats', async (req, res) => {
 app.get('/api/analytics/calendar', async (req, res) => {
   try {
     const consultations = await Consultation.find({ status: { $ne: 'cancelled' } });
-    res.json(consultations);
+    // Format consultations with id field
+    const formattedConsultations = consultations.map(c => ({
+      id: c._id.toString(),
+      ...c.toObject()
+    }));
+    res.json(formattedConsultations);
   } catch (err) {
     console.error('Get calendar error:', err);
     res.status(500).json({ message: 'Server error' });
@@ -522,7 +556,12 @@ app.get('/api/analytics/consultations-by-date', async (req, res) => {
   
   try {
     const consultations = await Consultation.find({ date });
-    res.json(consultations);
+    // Format consultations with id field
+    const formattedConsultations = consultations.map(c => ({
+      id: c._id.toString(),
+      ...c.toObject()
+    }));
+    res.json(formattedConsultations);
   } catch (err) {
     console.error('Get consultations by date error:', err);
     res.status(500).json({ message: 'Server error' });

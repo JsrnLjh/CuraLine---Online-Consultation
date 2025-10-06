@@ -2,38 +2,56 @@
 
 ## Pre-configured Login Credentials
 
-### 🩺 Admin/Doctor Account
-```
-Email:    admin@example.com
-Password: admin123
-Role:     Doctor
-```
+## 👨‍⚕️ Doctor Accounts
 
-**Access:**
-- ✅ Admin Dashboard
-- ✅ Analytics & Reports
-- ✅ Calendar View
-- ✅ All Patient Features
-- ✅ "Doctor" Badge in Header
+Each doctor has their own individual account to access the Doctor Dashboard:
 
-**Login URL:** http://localhost:3000/login
+### Dr. Sarah Johnson (General Practitioner)
+- **Email:** sarah.johnson@curaline.com
+- **Password:** sarah123
+- **Specialty:** General Practitioner
+- **Fee:** ₱500
+
+### Dr. Michael Chen (Cardiologist)
+- **Email:** michael.chen@curaline.com
+- **Password:** michael123
+- **Specialty:** Cardiologist
+- **Fee:** ₱800
+
+### Dr. Emily Rodriguez (Dermatologist)
+- **Email:** emily.rodriguez@curaline.com
+- **Password:** emily123
+- **Specialty:** Dermatologist
+- **Fee:** ₱600
+
+### Dr. James Anderson (Pediatrician)
+- **Email:** james.anderson@curaline.com
+- **Password:** james123
+- **Specialty:** Pediatrician
+- **Fee:** ₱550
+**Doctor Access:**
+- ✅ View their own appointments
+- ✅ Mark appointments as completed
+- ✅ Cancel appointments
+- ✅ Issue prescriptions
+- ✅ Join video consultations
+- ❌ Admin Dashboard (Restricted)
 
 ---
 
-### 👤 Patient Account
-```
-Email:    patient@example.com
-Password: patient123
-Role:     Patient
-```
+## 👤 Patient Account
+- **Email:** patient@example.com
+- **Password:** patient123
+- **Role:** Patient
 
-**Access:**
+**Patient Access:**
 - ✅ Browse Doctors
 - ✅ Book Consultations
 - ✅ View My Consultations
+- ✅ Make Payments
+- ✅ Join Video Calls
+- ❌ Doctor Dashboard (Restricted)
 - ❌ Admin Dashboard (Restricted)
-
-**Login URL:** http://localhost:3000/login
 
 ---
 
@@ -50,11 +68,11 @@ Role:     Patient
    ```
 
 3. **Login with test account:**
-   - Use admin@example.com for doctor access
+   - Use any doctor email for doctor dashboard access
    - Use patient@example.com for patient access
 
 4. **Test the features:**
-   - Admin: Check analytics, calendar, and reports
+   - Doctor: View appointments, issue prescriptions, join video calls
    - Patient: Browse doctors and book consultations
 
 ---
@@ -74,17 +92,18 @@ Choose role:
 
 ## Notes
 
-⚠️ **Development Only**
+⚠️ **Important Notes**
 - These are test accounts for development
-- Passwords are not hashed
-- Data is stored in memory (resets on server restart)
+- Passwords are hashed with bcrypt
+- Data is stored in MongoDB (persistent)
+- Run `npm run seed` to reset/recreate accounts
 
 🔒 **For Production**
 - Remove or change default credentials
-- Implement proper password hashing
-- Use database for persistent storage
 - Add email verification
+- Implement 2FA
+- Use strong passwords
 
 ---
 
-**Last Updated:** 2025-10-01
+**Last Updated:** 2025-10-06
