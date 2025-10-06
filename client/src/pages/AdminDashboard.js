@@ -60,6 +60,10 @@ function AdminDashboard() {
             <p>Monitor and manage your healthcare platform</p>
           </div>
           <div className="header-actions">
+            <Link to="/admin/analytics" className="btn btn-primary">
+              <BarChart3 size={20} />
+              Analytics & Reports
+            </Link>
             <Link to="/admin/management" className="btn btn-secondary">
               <Settings size={20} />
               Manage Users & Doctors

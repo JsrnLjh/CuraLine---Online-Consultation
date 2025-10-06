@@ -13,6 +13,7 @@ import BookConsultation from './pages/BookConsultation';
 import MyConsultations from './pages/MyConsultations';
 import AdminDashboard from './pages/AdminDashboard';
 import AdminManagement from './pages/AdminManagement';
+import AdminAnalytics from './pages/AdminAnalytics';
 import DoctorDashboard from './pages/DoctorDashboard';
 import Profile from './pages/Profile';
 import ConsultationRoom from './pages/ConsultationRoom';
@@ -85,6 +86,15 @@ function App() {
                 <>
                   <Header />
                   <AdminManagement />
+                </>
+              </AdminRoute>
+            } />
+            
+            <Route path="/admin/analytics" element={
+              <AdminRoute>
+                <>
+                  <Header />
+                  <AdminAnalytics />
                 </>
               </AdminRoute>
             } />

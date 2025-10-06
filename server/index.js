@@ -13,6 +13,10 @@ const Payment = require('./models/Payment');
 const Prescription = require('./models/Prescription');
 const Message = require('./models/Message');
 const PasswordReset = require('./models/PasswordReset');
+const ConsultationHistory = require('./models/ConsultationHistory');
+const Analytics = require('./models/Analytics');
+const Expense = require('./models/Expense');
+const Payroll = require('./models/Payroll');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -1110,7 +1114,712 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', message: 'E-Health API with MongoDB is running' });
 });
 
+// ==================== DAILY CONSULTATION RESET & ANALYTICS ====================
+
+// Function to archive completed consultations and update analytics
+async function archiveAndResetConsultations() {
+  try {
+    console.log('🔄 Starting daily consultation archive and reset...');
+    
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    
+    // Get all consultations from yesterday
+    const yesterdayConsultations = await Consultation.find({
+      createdAt: { $gte: yesterday, $lt: today }
+    });
+    
+    console.log(`📊 Found ${yesterdayConsultations.length} consultations from yesterday`);
+    
+    // Archive each consultation to history
+    for (const consultation of yesterdayConsultations) {
+      await ConsultationHistory.create({
+        originalConsultationId: consultation._id,
+        doctorId: consultation.doctorId,
+        patientId: consultation.patientId,
+        patientName: consultation.patientName,
+        patientEmail: consultation.patientEmail,
+        patientPhone: consultation.patientPhone,
+        doctorName: consultation.doctorName,
+        doctorSpecialty: consultation.doctorSpecialty,
+        consultationFee: consultation.consultationFee,
+        date: consultation.date,
+        time: consultation.time,
+        symptoms: consultation.symptoms,
+        status: consultation.status,
+        paymentStatus: consultation.paymentStatus,
+        paymentId: consultation.paymentId,
+        prescriptionId: consultation.prescriptionId,
+        startedAt: consultation.startedAt,
+        completedAt: consultation.status === 'completed' ? new Date() : null,
+        originalCreatedAt: consultation.createdAt
+      });
+    }
+    
+    // Generate analytics for yesterday
+    await generateDailyAnalytics(yesterday);
+    
+    // Delete yesterday's consultations from main collection
+    await Consultation.deleteMany({
+      createdAt: { $gte: yesterday, $lt: today }
+    });
+    
+    console.log('✅ Daily consultation archive and reset completed');
+  } catch (err) {
+    console.error('❌ Error in daily consultation reset:', err);
+  }
+}
+
+// Function to generate daily analytics
+async function generateDailyAnalytics(date) {
+  try {
+    const startOfDay = new Date(date);
+    startOfDay.setHours(0, 0, 0, 0);
+    const endOfDay = new Date(date);
+    endOfDay.setHours(23, 59, 59, 999);
+    
+    // Get consultations for the day
+    const consultations = await ConsultationHistory.find({
+      originalCreatedAt: { $gte: startOfDay, $lte: endOfDay }
+    });
+    
+    // Get payments for the day
+    const payments = await Payment.find({
+      createdAt: { $gte: startOfDay, $lte: endOfDay }
+    });
+    
+    // Calculate metrics
+    const totalConsultations = consultations.length;
+    const completedConsultations = consultations.filter(c => c.status === 'completed').length;
+    const cancelledConsultations = consultations.filter(c => c.status === 'cancelled').length;
+    const scheduledConsultations = consultations.filter(c => c.status === 'scheduled').length;
+    
+    const totalRevenue = payments.reduce((sum, p) => sum + p.amount, 0);
+    const avgRevenue = totalConsultations > 0 ? totalRevenue / totalConsultations : 0;
+    
+    // Get unique patients
+    const uniquePatientEmails = [...new Set(consultations.map(c => c.patientEmail))];
+    const newPatients = uniquePatientEmails.length;
+    
+    // Get active doctors
+    const uniqueDoctorIds = [...new Set(consultations.map(c => c.doctorId.toString()))];
+    
+    // Payment breakdown
+    const paymentBreakdown = {
+      card: payments.filter(p => p.method === 'card').length,
+      gcash: payments.filter(p => p.method === 'gcash').length,
+      paymaya: payments.filter(p => p.method === 'paymaya').length,
+      cash: payments.filter(p => p.method === 'cash').length
+    };
+    
+    // Specialty breakdown
+    const specialtyMap = {};
+    consultations.forEach(c => {
+      if (!specialtyMap[c.doctorSpecialty]) {
+        specialtyMap[c.doctorSpecialty] = { count: 0, revenue: 0 };
+      }
+      specialtyMap[c.doctorSpecialty].count++;
+      specialtyMap[c.doctorSpecialty].revenue += c.consultationFee;
+    });
+    
+    const specialtyBreakdown = Object.keys(specialtyMap).map(specialty => ({
+      specialty,
+      count: specialtyMap[specialty].count,
+      revenue: specialtyMap[specialty].revenue
+    }));
+    
+    // Top doctors
+    const doctorMap = {};
+    consultations.forEach(c => {
+      const docId = c.doctorId.toString();
+      if (!doctorMap[docId]) {
+        doctorMap[docId] = {
+          doctorId: c.doctorId,
+          doctorName: c.doctorName,
+          consultationCount: 0,
+          revenue: 0
+        };
+      }
+      doctorMap[docId].consultationCount++;
+      doctorMap[docId].revenue += c.consultationFee;
+    });
+    
+    const topDoctors = Object.values(doctorMap)
+      .sort((a, b) => b.consultationCount - a.consultationCount)
+      .slice(0, 10);
+    
+    // Create or update analytics record
+    await Analytics.findOneAndUpdate(
+      { date: startOfDay, period: 'daily' },
+      {
+        consultations: {
+          total: totalConsultations,
+          completed: completedConsultations,
+          cancelled: cancelledConsultations,
+          scheduled: scheduledConsultations
+        },
+        revenue: {
+          total: totalRevenue,
+          consultationFees: totalRevenue,
+          averagePerConsultation: avgRevenue
+        },
+        patients: {
+          new: newPatients,
+          returning: 0,
+          total: newPatients
+        },
+        doctors: {
+          active: uniqueDoctorIds.length,
+          totalConsultations: totalConsultations
+        },
+        payments: {
+          total: payments.length,
+          byMethod: paymentBreakdown
+        },
+        specialtyBreakdown,
+        topDoctors
+      },
+      { upsert: true, new: true }
+    );
+    
+    console.log(`📈 Analytics generated for ${date.toDateString()}`);
+  } catch (err) {
+    console.error('Error generating daily analytics:', err);
+  }
+}
+
+// Schedule daily reset at midnight
+function scheduleDailyReset() {
+  const now = new Date();
+  const night = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate() + 1, // Next day
+    0, 0, 0 // At midnight
+  );
+  const msToMidnight = night.getTime() - now.getTime();
+  
+  setTimeout(() => {
+    archiveAndResetConsultations();
+    // Schedule next reset
+    setInterval(archiveAndResetConsultations, 24 * 60 * 60 * 1000); // Every 24 hours
+  }, msToMidnight);
+  
+  console.log(`⏰ Daily consultation reset scheduled for midnight (in ${Math.round(msToMidnight / 1000 / 60)} minutes)`);
+}
+
+// ==================== ANALYTICS ENDPOINTS ====================
+
+// HIGH PRIORITY ANALYTICS
+
+// Get consultation statistics (daily, weekly, monthly, yearly)
+app.get('/api/analytics/consultations', async (req, res) => {
+  try {
+    const { period = 'daily', startDate, endDate } = req.query;
+    
+    let query = { period };
+    if (startDate && endDate) {
+      query.date = {
+        $gte: new Date(startDate),
+        $lte: new Date(endDate)
+      };
+    }
+    
+    const analytics = await Analytics.find(query).sort({ date: -1 }).limit(100);
+    
+    // Also get current day stats from active consultations
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const todayConsultations = await Consultation.find({
+      createdAt: { $gte: today }
+    });
+    
+    const currentDayStats = {
+      total: todayConsultations.length,
+      completed: todayConsultations.filter(c => c.status === 'completed').length,
+      cancelled: todayConsultations.filter(c => c.status === 'cancelled').length,
+      scheduled: todayConsultations.filter(c => c.status === 'scheduled').length,
+      inProgress: todayConsultations.filter(c => c.status === 'in-progress').length
+    };
+    
+    res.json({
+      historical: analytics,
+      currentDay: currentDayStats
+    });
+  } catch (err) {
+    console.error('Get consultation analytics error:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Get revenue analytics
+app.get('/api/analytics/revenue', async (req, res) => {
+  try {
+    const { period = 'daily', startDate, endDate } = req.query;
+    
+    let query = { period };
+    if (startDate && endDate) {
+      query.date = {
+        $gte: new Date(startDate),
+        $lte: new Date(endDate)
+      };
+    }
+    
+    const analytics = await Analytics.find(query).sort({ date: -1 }).limit(100);
+    
+    const revenueData = analytics.map(a => ({
+      date: a.date,
+      total: a.revenue.total,
+      consultationFees: a.revenue.consultationFees,
+      average: a.revenue.averagePerConsultation,
+      consultationCount: a.consultations.total
+    }));
+    
+    const totalRevenue = revenueData.reduce((sum, r) => sum + r.total, 0);
+    const avgRevenue = revenueData.length > 0 ? totalRevenue / revenueData.length : 0;
+    
+    res.json({
+      data: revenueData,
+      summary: {
+        total: totalRevenue,
+        average: avgRevenue,
+        period: period
+      }
+    });
+  } catch (err) {
+    console.error('Get revenue analytics error:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Get patient analytics
+app.get('/api/analytics/patients', async (req, res) => {
+  try {
+    const { period = 'daily' } = req.query;
+    
+    const analytics = await Analytics.find({ period }).sort({ date: -1 }).limit(30);
+    
+    const patientData = analytics.map(a => ({
+      date: a.date,
+      new: a.patients.new,
+      returning: a.patients.returning,
+      total: a.patients.total
+    }));
+    
+    // Get total unique patients from history
+    const allPatients = await ConsultationHistory.distinct('patientEmail');
+    const totalPatients = allPatients.length;
+    
+    res.json({
+      data: patientData,
+      summary: {
+        totalUnique: totalPatients,
+        period: period
+      }
+    });
+  } catch (err) {
+    console.error('Get patient analytics error:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// MEDIUM PRIORITY ANALYTICS
+
+// Get payroll data
+app.get('/api/analytics/payroll', async (req, res) => {
+  try {
+    const { status, startDate, endDate } = req.query;
+    
+    let query = {};
+    if (status) query.status = status;
+    if (startDate && endDate) {
+      query['period.start'] = { $gte: new Date(startDate) };
+      query['period.end'] = { $lte: new Date(endDate) };
+    }
+    
+    const payrolls = await Payroll.find(query).sort({ 'period.end': -1 });
+    
+    const totalPayroll = payrolls.reduce((sum, p) => sum + p.netPay, 0);
+    const totalRevenue = payrolls.reduce((sum, p) => sum + p.totalRevenue, 0);
+    
+    res.json({
+      payrolls,
+      summary: {
+        totalPayroll,
+        totalRevenue,
+        count: payrolls.length
+      }
+    });
+  } catch (err) {
+    console.error('Get payroll error:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Create payroll
+app.post('/api/analytics/payroll', async (req, res) => {
+  try {
+    const { doctorId, periodStart, periodEnd, commissionRate = 70 } = req.body;
+    
+    const doctor = await Doctor.findById(doctorId);
+    if (!doctor) {
+      return res.status(404).json({ message: 'Doctor not found' });
+    }
+    
+    // Get consultations for the period
+    const consultations = await ConsultationHistory.find({
+      doctorId,
+      originalCreatedAt: {
+        $gte: new Date(periodStart),
+        $lte: new Date(periodEnd)
+      },
+      status: 'completed',
+      paymentStatus: 'paid'
+    });
+    
+    const consultationsCount = consultations.length;
+    const totalRevenue = consultations.reduce((sum, c) => sum + c.consultationFee, 0);
+    const commission = (totalRevenue * commissionRate) / 100;
+    const netPay = commission;
+    
+    const payroll = await Payroll.create({
+      doctorId,
+      doctorName: doctor.name,
+      period: {
+        start: new Date(periodStart),
+        end: new Date(periodEnd)
+      },
+      consultationsCount,
+      totalRevenue,
+      commission,
+      commissionRate,
+      netPay,
+      status: 'pending'
+    });
+    
+    res.status(201).json(payroll);
+  } catch (err) {
+    console.error('Create payroll error:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Update payroll status
+app.patch('/api/analytics/payroll/:id', async (req, res) => {
+  try {
+    const { status, paymentDate, notes } = req.body;
+    
+    const payroll = await Payroll.findById(req.params.id);
+    if (!payroll) {
+      return res.status(404).json({ message: 'Payroll not found' });
+    }
+    
+    if (status) payroll.status = status;
+    if (paymentDate) payroll.paymentDate = new Date(paymentDate);
+    if (notes) payroll.notes = notes;
+    
+    await payroll.save();
+    res.json(payroll);
+  } catch (err) {
+    console.error('Update payroll error:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Get expenses
+app.get('/api/analytics/expenses', async (req, res) => {
+  try {
+    const { category, status, startDate, endDate } = req.query;
+    
+    let query = {};
+    if (category) query.category = category;
+    if (status) query.status = status;
+    if (startDate && endDate) {
+      query.date = {
+        $gte: new Date(startDate),
+        $lte: new Date(endDate)
+      };
+    }
+    
+    const expenses = await Expense.find(query).sort({ date: -1 });
+    
+    const totalExpenses = expenses.reduce((sum, e) => sum + e.amount, 0);
+    const byCategory = {};
+    expenses.forEach(e => {
+      byCategory[e.category] = (byCategory[e.category] || 0) + e.amount;
+    });
+    
+    res.json({
+      expenses,
+      summary: {
+        total: totalExpenses,
+        byCategory,
+        count: expenses.length
+      }
+    });
+  } catch (err) {
+    console.error('Get expenses error:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Create expense
+app.post('/api/analytics/expenses', async (req, res) => {
+  try {
+    const expense = await Expense.create(req.body);
+    res.status(201).json(expense);
+  } catch (err) {
+    console.error('Create expense error:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Update expense
+app.put('/api/analytics/expenses/:id', async (req, res) => {
+  try {
+    const expense = await Expense.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      { new: true, runValidators: true }
+    );
+    
+    if (!expense) {
+      return res.status(404).json({ message: 'Expense not found' });
+    }
+    
+    res.json(expense);
+  } catch (err) {
+    console.error('Update expense error:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Delete expense
+app.delete('/api/analytics/expenses/:id', async (req, res) => {
+  try {
+    const expense = await Expense.findByIdAndDelete(req.params.id);
+    
+    if (!expense) {
+      return res.status(404).json({ message: 'Expense not found' });
+    }
+    
+    res.json({ message: 'Expense deleted successfully' });
+  } catch (err) {
+    console.error('Delete expense error:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Get doctor performance
+app.get('/api/analytics/doctor-performance', async (req, res) => {
+  try {
+    const { period = 'daily', limit = 10 } = req.query;
+    
+    const analytics = await Analytics.find({ period })
+      .sort({ date: -1 })
+      .limit(1);
+    
+    if (analytics.length === 0) {
+      return res.json({ topDoctors: [] });
+    }
+    
+    res.json({
+      topDoctors: analytics[0].topDoctors.slice(0, parseInt(limit)),
+      date: analytics[0].date
+    });
+  } catch (err) {
+    console.error('Get doctor performance error:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// LOW PRIORITY ANALYTICS
+
+// Get specialty breakdown
+app.get('/api/analytics/specialties', async (req, res) => {
+  try {
+    const { period = 'daily' } = req.query;
+    
+    const analytics = await Analytics.find({ period })
+      .sort({ date: -1 })
+      .limit(1);
+    
+    if (analytics.length === 0) {
+      return res.json({ specialties: [] });
+    }
+    
+    res.json({
+      specialties: analytics[0].specialtyBreakdown,
+      date: analytics[0].date
+    });
+  } catch (err) {
+    console.error('Get specialty analytics error:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Get payment method breakdown
+app.get('/api/analytics/payment-methods', async (req, res) => {
+  try {
+    const { startDate, endDate } = req.query;
+    
+    let query = { period: 'daily' };
+    if (startDate && endDate) {
+      query.date = {
+        $gte: new Date(startDate),
+        $lte: new Date(endDate)
+      };
+    }
+    
+    const analytics = await Analytics.find(query).sort({ date: -1 });
+    
+    const aggregated = {
+      card: 0,
+      gcash: 0,
+      paymaya: 0,
+      cash: 0
+    };
+    
+    analytics.forEach(a => {
+      aggregated.card += a.payments.byMethod.card;
+      aggregated.gcash += a.payments.byMethod.gcash;
+      aggregated.paymaya += a.payments.byMethod.paymaya;
+      aggregated.cash += a.payments.byMethod.cash;
+    });
+    
+    res.json({
+      paymentMethods: aggregated,
+      total: Object.values(aggregated).reduce((sum, val) => sum + val, 0)
+    });
+  } catch (err) {
+    console.error('Get payment methods error:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Get consultation history (archived consultations)
+app.get('/api/analytics/consultation-history', async (req, res) => {
+  try {
+    const { patientEmail, doctorId, startDate, endDate, status } = req.query;
+    
+    let query = {};
+    if (patientEmail) query.patientEmail = patientEmail;
+    if (doctorId) query.doctorId = doctorId;
+    if (status) query.status = status;
+    if (startDate && endDate) {
+      query.originalCreatedAt = {
+        $gte: new Date(startDate),
+        $lte: new Date(endDate)
+      };
+    }
+    
+    const history = await ConsultationHistory.find(query)
+      .sort({ originalCreatedAt: -1 })
+      .limit(100);
+    
+    res.json(history);
+  } catch (err) {
+    console.error('Get consultation history error:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Get comprehensive dashboard stats
+app.get('/api/analytics/dashboard', async (req, res) => {
+  try {
+    // Get today's stats
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const todayConsultations = await Consultation.countDocuments({
+      createdAt: { $gte: today }
+    });
+    
+    // Get this week's analytics
+    const weekAgo = new Date();
+    weekAgo.setDate(weekAgo.getDate() - 7);
+    
+    const weekAnalytics = await Analytics.find({
+      period: 'daily',
+      date: { $gte: weekAgo }
+    });
+    
+    const weeklyConsultations = weekAnalytics.reduce((sum, a) => sum + a.consultations.total, 0);
+    const weeklyRevenue = weekAnalytics.reduce((sum, a) => sum + a.revenue.total, 0);
+    
+    // Get this month's analytics
+    const monthAgo = new Date();
+    monthAgo.setDate(monthAgo.getDate() - 30);
+    
+    const monthAnalytics = await Analytics.find({
+      period: 'daily',
+      date: { $gte: monthAgo }
+    });
+    
+    const monthlyConsultations = monthAnalytics.reduce((sum, a) => sum + a.consultations.total, 0);
+    const monthlyRevenue = monthAnalytics.reduce((sum, a) => sum + a.revenue.total, 0);
+    
+    // Get yearly stats
+    const yearAgo = new Date();
+    yearAgo.setFullYear(yearAgo.getFullYear() - 1);
+    
+    const yearAnalytics = await Analytics.find({
+      period: 'daily',
+      date: { $gte: yearAgo }
+    });
+    
+    const yearlyConsultations = yearAnalytics.reduce((sum, a) => sum + a.consultations.total, 0);
+    const yearlyRevenue = yearAnalytics.reduce((sum, a) => sum + a.revenue.total, 0);
+    
+    // Get total patients and doctors
+    const totalPatients = await User.countDocuments({ role: 'patient' });
+    const totalDoctors = await Doctor.countDocuments();
+    
+    // Get pending payrolls
+    const pendingPayrolls = await Payroll.countDocuments({ status: 'pending' });
+    
+    // Get this month's expenses
+    const monthExpenses = await Expense.find({
+      date: { $gte: monthAgo }
+    });
+    const monthlyExpenses = monthExpenses.reduce((sum, e) => sum + e.amount, 0);
+    
+    res.json({
+      today: {
+        consultations: todayConsultations
+      },
+      week: {
+        consultations: weeklyConsultations,
+        revenue: weeklyRevenue
+      },
+      month: {
+        consultations: monthlyConsultations,
+        revenue: monthlyRevenue,
+        expenses: monthlyExpenses,
+        netProfit: monthlyRevenue - monthlyExpenses
+      },
+      year: {
+        consultations: yearlyConsultations,
+        revenue: yearlyRevenue
+      },
+      totals: {
+        patients: totalPatients,
+        doctors: totalDoctors,
+        pendingPayrolls
+      }
+    });
+  } catch (err) {
+    console.error('Get dashboard stats error:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`🚀 Server is running on port ${PORT}`);
   console.log(`📊 Using MongoDB database`);
+  
+  // Start the daily reset scheduler
+  scheduleDailyReset();
 });
