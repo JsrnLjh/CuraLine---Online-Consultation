@@ -4,6 +4,11 @@
   background: white;
 }
 
+.doctors-page .container {
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
 .page-header {
   text-align: center;
   margin-bottom: 32px;
@@ -95,11 +100,13 @@
 
 .grid {
   display: grid;
-  gap: 24px;
+  gap: 20px;
 }
 
 .grid-2 {
   grid-template-columns: repeat(2, 1fr);
+  max-width: 1400px;
+  margin: 0 auto;
 }
 
 .doctor-card {

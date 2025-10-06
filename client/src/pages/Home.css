@@ -56,12 +56,13 @@
   display: flex;
   gap: 16px;
   justify-content: center;
+  align-items: center;
   flex-wrap: wrap;
 }
 
 .hero-buttons .btn {
-  padding: 14px 28px;
-  font-size: 16px;
+  padding: 14px 15px;
+  font-size: 15px;
   white-space: nowrap;
 }
 

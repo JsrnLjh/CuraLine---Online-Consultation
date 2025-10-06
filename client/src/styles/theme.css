@@ -1,0 +1,503 @@
+/* Light Mode (Default) */
+:root[data-theme="light"] {
+  /* Background Colors */
+  --bg-primary: #ffffff;
+  --bg-secondary: #f9fafb;
+  --bg-tertiary: #f3f4f6;
+  
+  /* Text Colors */
+  --text-primary: #1f2937;
+  --text-secondary: #6b7280;
+  --text-tertiary: #9ca3af;
+  
+  /* Border Colors */
+  --border-primary: #e5e7eb;
+  --border-secondary: #d1d5db;
+  
+  /* Brand Colors */
+  --brand-primary: #667eea;
+  --brand-secondary: #764ba2;
+  
+  /* Status Colors */
+  --success: #10b981;
+  --warning: #f59e0b;
+  --error: #ef4444;
+  --info: #3b82f6;
+  
+  /* Card & Component */
+  --card-bg: #ffffff;
+  --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  --card-shadow-hover: 0 4px 12px rgba(0, 0, 0, 0.15);
+  
+  /* Header */
+  --header-bg: #ffffff;
+  --header-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Dark Mode */
+:root[data-theme="dark"] {
+  /* Background Colors */
+  --bg-primary: #0f172a;
+  --bg-secondary: #1e293b;
+  --bg-tertiary: #334155;
+  
+  /* Text Colors */
+  --text-primary: #f1f5f9;
+  --text-secondary: #cbd5e1;
+  --text-tertiary: #94a3b8;
+  
+  /* Border Colors */
+  --border-primary: rgba(51, 65, 85, 0.3);
+  --border-secondary: rgba(71, 85, 105, 0.5);
+  
+  /* Brand Colors */
+  --brand-primary: #8b5cf6;
+  --brand-secondary: #a78bfa;
+  
+  /* Status Colors */
+  --success: #10b981;
+  --warning: #f59e0b;
+  --error: #ef4444;
+  --info: #3b82f6;
+  
+  /* Card & Component */
+  --card-bg: #1e293b;
+  --card-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  --card-shadow-hover: 0 8px 12px rgba(0, 0, 0, 0.3);
+  
+  /* Header */
+  --header-bg: #1e293b;
+  --header-shadow: 0 4px 6px rgba(0, 0, 0, 0.4);
+}
+
+/* Apply theme variables globally */
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Card Styles */
+.card {
+  background: var(--card-bg);
+  border: 1px solid var(--border-primary);
+  box-shadow: var(--card-shadow);
+  transition: all 0.3s ease;
+}
+
+.card:hover {
+  box-shadow: var(--card-shadow-hover);
+}
+
+/* Header Styles */
+.header {
+  background: var(--header-bg);
+  box-shadow: var(--header-shadow);
+}
+
+/* Input Styles */
+input, select, textarea {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  border-color: var(--border-primary);
+}
+
+input:focus, select:focus, textarea:focus {
+  border-color: var(--brand-primary);
+}
+
+/* Button Styles */
+.btn-primary {
+  background: linear-gradient(135deg, var(--brand-primary) 0%, var(--brand-secondary) 100%);
+}
+
+/* Dark mode specific adjustments */
+[data-theme="dark"] .theme-toggle {
+  color: #cbd5e1;
+}
+
+[data-theme="dark"] .theme-toggle:hover {
+  background: #334155;
+  color: #8b5cf6;
+}
+
+[data-theme="dark"] .nav-link {
+  color: #cbd5e1;
+}
+
+[data-theme="dark"] .nav-link:hover {
+  background: #334155;
+  color: #a78bfa;
+}
+
+[data-theme="dark"] .nav-link.active {
+  background: linear-gradient(135deg, #8b5cf6 0%, #a78bfa 100%);
+  color: white;
+}
+
+[data-theme="dark"] .user-info {
+  color: #f1f5f9;
+  border-color: #334155;
+  background: #1e293b;
+}
+
+[data-theme="dark"] .user-info:hover {
+  border-color: #8b5cf6;
+  background: #334155;
+}
+
+[data-theme="dark"] .dropdown-menu {
+  background: #1e293b;
+  border-color: #334155;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+}
+
+[data-theme="dark"] .dropdown-item {
+  color: #cbd5e1;
+}
+
+[data-theme="dark"] .dropdown-item:hover {
+  background: #334155;
+  color: #a78bfa;
+}
+
+[data-theme="dark"] .role-badge {
+  background: linear-gradient(135deg, #8b5cf6 0%, #a78bfa 100%);
+}
+
+[data-theme="dark"] .role-badge.admin {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+}
+
+/* Page backgrounds */
+[data-theme="dark"] .doctors-page,
+[data-theme="dark"] .consultations-page,
+[data-theme="dark"] .home {
+  background: var(--bg-primary);
+}
+
+[data-theme="dark"] .admin-dashboard {
+  background: var(--bg-primary);
+}
+
+/* Hero section */
+[data-theme="dark"] .hero {
+  background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+}
+
+[data-theme="dark"] .hero h1,
+[data-theme="dark"] .hero p {
+  color: var(--text-primary);
+}
+
+/* Feature cards */
+[data-theme="dark"] .feature-card {
+  background: var(--card-bg);
+  border: none;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+[data-theme="dark"] .feature-card:hover {
+  background: var(--bg-tertiary);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
+  transform: translateY(-2px);
+}
+
+[data-theme="dark"] .feature-card h3 {
+  color: var(--text-primary);
+}
+
+[data-theme="dark"] .feature-card p {
+  color: var(--text-secondary);
+}
+
+/* Doctor cards */
+[data-theme="dark"] .doctor-card {
+  background: var(--card-bg);
+  border: none;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+[data-theme="dark"] .doctor-card:hover {
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
+  transform: translateY(-2px);
+}
+
+[data-theme="dark"] .doctor-bio {
+  background: var(--bg-tertiary);
+}
+
+[data-theme="dark"] .doctor-info h3 {
+  color: var(--text-primary);
+}
+
+[data-theme="dark"] .specialty {
+  color: var(--brand-primary);
+}
+
+[data-theme="dark"] .detail-item {
+  color: var(--text-secondary);
+}
+
+[data-theme="dark"] .detail-item svg {
+  color: var(--brand-primary);
+}
+
+/* Consultation cards */
+[data-theme="dark"] .consultation-card {
+  background: var(--card-bg);
+  border: none;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+[data-theme="dark"] .consultation-card:hover {
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
+  transform: translateY(-2px);
+}
+
+[data-theme="dark"] .consultation-header h3 {
+  color: var(--text-primary);
+}
+
+[data-theme="dark"] .consultation-symptoms {
+  background: var(--bg-tertiary);
+}
+
+[data-theme="dark"] .consultation-header {
+  border-bottom-color: var(--border-primary);
+}
+
+[data-theme="dark"] .consultation-footer {
+  border-top-color: var(--border-primary);
+}
+
+/* Metric cards */
+[data-theme="dark"] .metric-card {
+  background: var(--card-bg);
+  border: none;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+[data-theme="dark"] .metric-card:hover {
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
+  transform: translateY(-2px);
+}
+
+[data-theme="dark"] .metric-value {
+  color: var(--text-primary);
+}
+
+[data-theme="dark"] .metric-label {
+  color: var(--text-tertiary);
+}
+
+/* Status items */
+[data-theme="dark"] .status-item,
+[data-theme="dark"] .period-item {
+  background: var(--bg-tertiary);
+}
+
+[data-theme="dark"] .period-value {
+  color: var(--brand-primary);
+}
+
+[data-theme="dark"] .status-count {
+  color: var(--text-primary);
+}
+
+/* Search and filters */
+[data-theme="dark"] .search-box {
+  background: var(--card-bg);
+  border-color: var(--border-primary);
+}
+
+[data-theme="dark"] .search-box input {
+  background: transparent;
+  color: var(--text-primary);
+}
+
+[data-theme="dark"] .search-box input::placeholder {
+  color: var(--text-tertiary);
+}
+
+[data-theme="dark"] .search-filter-section {
+  background: var(--card-bg);
+  border: none;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+[data-theme="dark"] .filter-group select {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  border-color: var(--border-primary);
+}
+
+/* Buttons in dark mode */
+[data-theme="dark"] .btn-secondary {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  border-color: var(--border-primary);
+}
+
+[data-theme="dark"] .btn-secondary:hover {
+  background: var(--brand-primary);
+  color: white;
+  border-color: var(--brand-primary);
+}
+
+/* Toggle buttons */
+[data-theme="dark"] .toggle-btn {
+  color: var(--text-secondary);
+  background: transparent;
+}
+
+[data-theme="dark"] .toggle-btn:hover {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+
+[data-theme="dark"] .toggle-btn.active {
+  background: linear-gradient(135deg, var(--brand-primary) 0%, var(--brand-secondary) 100%);
+  color: white;
+}
+
+[data-theme="dark"] .view-toggle {
+  background: var(--card-bg);
+  border: none;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+/* Page headers */
+[data-theme="dark"] .page-header h1,
+[data-theme="dark"] .dashboard-header h1 {
+  color: var(--text-primary);
+}
+
+[data-theme="dark"] .page-header p,
+[data-theme="dark"] .dashboard-header p {
+  color: var(--text-secondary);
+}
+
+/* Charts and bars */
+[data-theme="dark"] .chart-bar {
+  background: linear-gradient(135deg, var(--brand-primary) 0%, var(--brand-secondary) 100%);
+}
+
+[data-theme="dark"] .chart-label {
+  color: var(--text-secondary);
+}
+
+[data-theme="dark"] .chart-value {
+  color: var(--text-primary);
+}
+
+/* Time slots */
+[data-theme="dark"] .time-slot-mini {
+  background: rgba(139, 92, 246, 0.2);
+  color: var(--brand-primary);
+}
+
+[data-theme="dark"] .more-slots {
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+}
+
+/* Notifications */
+[data-theme="dark"] .payment-notice,
+[data-theme="dark"] .cancellation-notice {
+  background: rgba(245, 158, 11, 0.1);
+  border-color: var(--warning);
+  color: var(--warning);
+}
+
+/* Empty states */
+[data-theme="dark"] .empty-state h3 {
+  color: var(--text-primary);
+}
+
+[data-theme="dark"] .empty-state p {
+  color: var(--text-secondary);
+}
+
+/* Text color adjustments for dark mode */
+[data-theme="dark"] h1,
+[data-theme="dark"] h2,
+[data-theme="dark"] h3,
+[data-theme="dark"] h4,
+[data-theme="dark"] h5,
+[data-theme="dark"] h6 {
+  color: var(--text-primary);
+}
+
+[data-theme="dark"] p,
+[data-theme="dark"] span,
+[data-theme="dark"] div {
+  color: var(--text-secondary);
+}
+
+[data-theme="dark"] label {
+  color: var(--text-secondary);
+}
+
+[data-theme="dark"] small {
+  color: var(--text-tertiary);
+}
+
+[data-theme="dark"] .results-count {
+  color: var(--text-secondary);
+}
+
+[data-theme="dark"] .rating {
+  color: var(--text-primary);
+}
+
+[data-theme="dark"] .reviews {
+  color: var(--text-tertiary);
+}
+
+[data-theme="dark"] .doctor-education,
+[data-theme="dark"] .doctor-availability {
+  color: var(--text-secondary);
+}
+
+[data-theme="dark"] .doctor-education strong {
+  color: var(--text-primary);
+}
+
+[data-theme="dark"] .doctor-availability p {
+  color: var(--text-primary);
+}
+
+[data-theme="dark"] .metric-content h3 {
+  color: var(--text-tertiary);
+}
+
+[data-theme="dark"] .status-info {
+  color: var(--text-primary);
+}
+
+[data-theme="dark"] .consultation-footer small {
+  color: var(--text-tertiary);
+}
+
+[data-theme="dark"] .auth-header h1 {
+  color: var(--text-primary);
+}
+
+[data-theme="dark"] .auth-header p {
+  color: var(--text-secondary);
+}
+
+[data-theme="dark"] .cta {
+  background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+}
+
+[data-theme="dark"] .cta h2,
+[data-theme="dark"] .cta p {
+  color: var(--text-primary);
+}
+
+/* Smooth transitions for theme switching */
+* {
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
