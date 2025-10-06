@@ -26,10 +26,13 @@ function Doctors() {
   const fetchDoctors = async () => {
     try {
       const response = await axios.get('/api/doctors');
+      console.log('Doctors fetched:', response.data);
+      console.log('First doctor ID:', response.data[0]?.id || response.data[0]?._id);
       setDoctors(response.data);
       setFilteredDoctors(response.data);
       setLoading(false);
     } catch (err) {
+      console.error('Error fetching doctors:', err);
       setError('Failed to load doctors. Please try again later.');
       setLoading(false);
     }
@@ -184,7 +187,7 @@ function Doctors() {
                 </div>
               </div>
 
-              <Link to={`/book/${doctor.id}`} className="btn btn-primary" style={{ width: '100%', justifyContent: 'center' }}>
+              <Link to={`/book/${doctor.id || doctor._id}`} className="btn btn-primary" style={{ width: '100%', justifyContent: 'center' }}>
                 <Calendar size={20} />
                 Book Consultation
               </Link>

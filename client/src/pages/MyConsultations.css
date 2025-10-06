@@ -76,13 +76,12 @@
 }
 
 .consultation-symptoms p {
-  color: #4b5563;
   margin-top: 8px;
   line-height: 1.6;
 }
 
 .consultation-footer {
-  padding-top: 16px;
+  padding-top: 12px;
   border-top: 1px solid #e5e7eb;
 }
 
@@ -90,12 +89,39 @@
   color: #9ca3af;
 }
 
-.consultation-actions {
-  margin-top: 16px;
-  padding-top: 16px;
-  border-top: 1px solid #e5e7eb;
+.payment-notice {
   display: flex;
+  align-items: center;
   gap: 12px;
+  padding: 12px 16px;
+  background: #fef3c7;
+  border: 1px solid #fbbf24;
+  border-radius: 8px;
+  margin-top: 16px;
+  color: #92400e;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.btn-pay-now {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: #fbbf24;
+  color: #78350f;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-left: auto;
+}
+
+.btn-pay-now:hover {
+  background: #f59e0b;
+  transform: translateY(-1px);
 }
 
 .btn-join-call {

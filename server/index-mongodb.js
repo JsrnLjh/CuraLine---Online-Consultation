@@ -203,26 +203,7 @@ app.post('/api/auth/change-password', async (req, res) => {
 app.get('/api/doctors', async (req, res) => {
   try {
     const doctors = await Doctor.find().sort({ createdAt: -1 });
-    // Format doctors to include 'id' field for frontend compatibility
-    const formattedDoctors = doctors.map(doc => ({
-      id: doc._id.toString(),
-      _id: doc._id,
-      name: doc.name,
-      specialty: doc.specialty,
-      experience: doc.experience,
-      rating: doc.rating,
-      reviews: doc.reviews,
-      consultationFee: doc.consultationFee,
-      image: doc.image,
-      bio: doc.bio,
-      education: doc.education,
-      languages: doc.languages,
-      certifications: doc.certifications,
-      availability: doc.availability,
-      userId: doc.userId,
-      createdAt: doc.createdAt
-    }));
-    res.json(formattedDoctors);
+    res.json(doctors);
   } catch (err) {
     console.error('Get doctors error:', err);
     res.status(500).json({ message: 'Server error' });
@@ -234,26 +215,7 @@ app.get('/api/doctors/:id', async (req, res) => {
   try {
     const doctor = await Doctor.findById(req.params.id);
     if (doctor) {
-      // Format doctor to include 'id' field
-      const formattedDoctor = {
-        id: doctor._id.toString(),
-        _id: doctor._id,
-        name: doctor.name,
-        specialty: doctor.specialty,
-        experience: doctor.experience,
-        rating: doctor.rating,
-        reviews: doctor.reviews,
-        consultationFee: doctor.consultationFee,
-        image: doctor.image,
-        bio: doctor.bio,
-        education: doctor.education,
-        languages: doctor.languages,
-        certifications: doctor.certifications,
-        availability: doctor.availability,
-        userId: doctor.userId,
-        createdAt: doctor.createdAt
-      };
-      res.json(formattedDoctor);
+      res.json(doctor);
     } else {
       res.status(404).json({ message: 'Doctor not found' });
     }
@@ -325,13 +287,7 @@ app.post('/api/consultations', async (req, res) => {
       );
     }
     
-    // Format consultation response with 'id' field
-    const formattedConsultation = {
-      id: consultation._id.toString(),
-      ...consultation.toObject()
-    };
-    
-    res.status(201).json(formattedConsultation);
+    res.status(201).json(consultation);
   } catch (err) {
     console.error('Book consultation error:', err);
     res.status(500).json({ message: 'Server error' });
@@ -342,12 +298,7 @@ app.post('/api/consultations', async (req, res) => {
 app.get('/api/consultations', async (req, res) => {
   try {
     const consultations = await Consultation.find().sort({ createdAt: -1 });
-    // Format consultations to include 'id' field
-    const formattedConsultations = consultations.map(c => ({
-      id: c._id.toString(),
-      ...c.toObject()
-    }));
-    res.json(formattedConsultations);
+    res.json(consultations);
   } catch (err) {
     console.error('Get consultations error:', err);
     res.status(500).json({ message: 'Server error' });
@@ -359,11 +310,7 @@ app.get('/api/consultations/:id', async (req, res) => {
   try {
     const consultation = await Consultation.findById(req.params.id);
     if (consultation) {
-      const formattedConsultation = {
-        id: consultation._id.toString(),
-        ...consultation.toObject()
-      };
-      res.json(formattedConsultation);
+      res.json(consultation);
     } else {
       res.status(404).json({ message: 'Consultation not found' });
     }

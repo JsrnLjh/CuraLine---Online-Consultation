@@ -16,6 +16,7 @@ import AdminManagement from './pages/AdminManagement';
 import DoctorDashboard from './pages/DoctorDashboard';
 import Profile from './pages/Profile';
 import ConsultationRoom from './pages/ConsultationRoom';
+import Payment from './pages/Payment';
 
 function App() {
   return (
@@ -107,6 +108,16 @@ function App() {
             <Route path="/consultation-room/:consultationId" element={
               <ProtectedRoute>
                 <ConsultationRoom />
+              </ProtectedRoute>
+            } />
+
+            {/* Payment */}
+            <Route path="/payment/:consultationId" element={
+              <ProtectedRoute>
+                <>
+                  <Header />
+                  <Payment />
+                </>
               </ProtectedRoute>
             } />
             </Routes>

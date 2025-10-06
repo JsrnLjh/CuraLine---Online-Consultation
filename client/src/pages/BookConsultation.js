@@ -66,14 +66,14 @@ function BookConsultation() {
     setSubmitting(true);
 
     try {
-      await axios.post('/api/consultations', {
+      const response = await axios.post('/api/consultations', {
         ...formData,
         doctorId: doctor.id
       });
       setSuccess(true);
       setTimeout(() => {
-        navigate('/consultations');
-      }, 3000);
+        navigate(`/payment/${response.data.id}`);
+      }, 2000);
     } catch (err) {
       alert('Failed to book consultation. Please try again.');
       setSubmitting(false);

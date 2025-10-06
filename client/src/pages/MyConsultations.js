@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { Calendar, Clock, User, FileText, XCircle, AlertCircle, Edit3, Video } from 'lucide-react';
+import { Calendar, Clock, User, FileText, XCircle, AlertCircle, Edit3, Video, CreditCard } from 'lucide-react';
 import './MyConsultations.css';
 
 function MyConsultations() {
@@ -158,6 +158,20 @@ function MyConsultations() {
 
                 {consultation.status === 'scheduled' && (
                   <>
+                    {consultation.paymentStatus === 'pending' && (
+                      <div className="payment-notice">
+                        <AlertCircle size={18} />
+                        <span>Payment pending</span>
+                        <button 
+                          onClick={() => navigate(`/payment/${consultation.id}`)}
+                          className="btn-pay-now"
+                        >
+                          <CreditCard size={16} />
+                          Pay Now
+                        </button>
+                      </div>
+                    )}
+
                     <div className="consultation-actions">
                       <button 
                         onClick={() => joinCall(consultation.id)}
