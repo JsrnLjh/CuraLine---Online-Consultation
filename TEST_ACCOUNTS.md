@@ -2,7 +2,23 @@
 
 ## Pre-configured Login Credentials
 
-## 👨‍⚕️ Doctor Accounts
+## 👑 Admin Account (Full System Access)
+
+### System Administrator
+- **Email:** admin@curaline.com
+- **Password:** admin123
+- **Role:** Admin
+
+**Admin Access:**
+- ✅ Full Admin Dashboard
+- ✅ Manage Users & Doctors (CRUD operations)
+- ✅ View all system analytics
+- ✅ Calendar view of all appointments
+- ✅ Complete system control
+
+---
+
+## 👨‍⚕️ Doctor Accounts (Doctor Dashboard Only)
 
 Each doctor has their own individual account to access the Doctor Dashboard:
 
@@ -30,12 +46,13 @@ Each doctor has their own individual account to access the Doctor Dashboard:
 - **Specialty:** Pediatrician
 - **Fee:** ₱550
 **Doctor Access:**
-- ✅ View their own appointments
+- ✅ View their own appointments only
 - ✅ Mark appointments as completed
 - ✅ Cancel appointments
 - ✅ Issue prescriptions
 - ✅ Join video consultations
-- ❌ Admin Dashboard (Restricted)
+- ❌ Admin Dashboard (Restricted to Admin only)
+- ❌ Manage Users & Doctors (Restricted to Admin only)
 
 ---
 
@@ -68,10 +85,12 @@ Each doctor has their own individual account to access the Doctor Dashboard:
    ```
 
 3. **Login with test account:**
+   - Use admin@curaline.com for full admin access
    - Use any doctor email for doctor dashboard access
    - Use patient@example.com for patient access
 
 4. **Test the features:**
+   - Admin: Manage users/doctors, view analytics, full system control
    - Doctor: View appointments, issue prescriptions, join video calls
    - Patient: Browse doctors and book consultations
 

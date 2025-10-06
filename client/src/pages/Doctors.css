@@ -93,27 +93,36 @@
   font-weight: 500;
 }
 
+.grid {
+  display: grid;
+  gap: 24px;
+}
+
+.grid-2 {
+  grid-template-columns: repeat(2, 1fr);
+}
+
 .doctor-card {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 16px;
 }
 
 .doctor-header {
   display: flex;
-  gap: 20px;
+  gap: 16px;
   align-items: center;
 }
 
 .doctor-image {
-  width: 80px;
-  height: 80px;
+  width: 64px;
+  height: 64px;
   border-radius: 50%;
   background: #f3f4f6;
 }
 
 .doctor-info h3 {
-  font-size: 20px;
+  font-size: 18px;
   color: #1f2937;
   margin-bottom: 4px;
 }
@@ -139,22 +148,22 @@
 }
 
 .doctor-bio {
-  padding: 16px;
+  padding: 12px;
   background: #f9fafb;
   border-radius: 8px;
 }
 
 .doctor-bio p {
   color: #4b5563;
-  line-height: 1.6;
-  font-size: 14px;
+  line-height: 1.5;
+  font-size: 13px;
 }
 
 .doctor-details {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  padding: 16px 0;
+  gap: 10px;
+  padding: 12px 0;
   border-top: 1px solid #e5e7eb;
   border-bottom: 1px solid #e5e7eb;
 }
@@ -164,7 +173,7 @@
   align-items: center;
   gap: 8px;
   color: #6b7280;
-  font-size: 14px;
+  font-size: 13px;
 }
 
 .detail-item svg {
@@ -172,7 +181,7 @@
 }
 
 .doctor-education {
-  font-size: 14px;
+  font-size: 13px;
   color: #4b5563;
 }
 
@@ -181,27 +190,27 @@
 }
 
 .doctor-availability {
-  font-size: 14px;
+  font-size: 13px;
 }
 
 .doctor-availability p {
   color: #1f2937;
   font-weight: 600;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
 }
 
 .time-slots-preview {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 6px;
 }
 
 .time-slot-mini {
-  padding: 4px 12px;
+  padding: 3px 10px;
   background: #dbeafe;
   color: #1e40af;
-  border-radius: 6px;
-  font-size: 12px;
+  border-radius: 4px;
+  font-size: 11px;
   font-weight: 500;
 }
 
@@ -223,6 +232,29 @@
   font-size: 18px;
   color: #6b7280;
   margin-bottom: 24px;
+}
+
+@media (max-width: 768px) {
+  .grid-2 {
+    grid-template-columns: 1fr;
+  }
+
+  .doctor-header {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .filters {
+    flex-direction: column;
+  }
+
+  .filter-group {
+    width: 100%;
+  }
+
+  .filter-group select {
+    width: 100%;
+  }
 }
 
 .loading,

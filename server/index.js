@@ -129,6 +129,8 @@ app.post('/api/auth/login', async (req, res) => {
       createdAt: user.createdAt
     };
 
+    console.log(`✅ Login successful: ${user.name} (${user.role})`);
+
     res.json({ 
       message: 'Login successful',
       user: userResponse 

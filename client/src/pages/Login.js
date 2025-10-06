@@ -33,8 +33,10 @@ function Login() {
       login(response.data.user);
       
       // Redirect based on role
-      if (response.data.user.role === 'doctor') {
+      if (response.data.user.role === 'admin') {
         navigate('/admin');
+      } else if (response.data.user.role === 'doctor') {
+        navigate('/doctor/appointments');
       } else {
         navigate('/');
       }

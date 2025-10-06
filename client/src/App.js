@@ -1,10 +1,10 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import './App.css';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { NotificationProvider } from './context/NotificationContext';
-import Header from './components/Header';
 import ProtectedRoute from './components/ProtectedRoute';
+import AdminRoute from './components/AdminRoute';
+import Header from './components/Header';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Home from './pages/Home';
@@ -70,23 +70,23 @@ function App() {
               </ProtectedRoute>
             } />
             
-            {/* Doctor-only routes */}
+            {/* Admin-only routes */}
             <Route path="/admin" element={
-              <ProtectedRoute requireDoctor={true}>
+              <AdminRoute>
                 <>
                   <Header />
                   <AdminDashboard />
                 </>
-              </ProtectedRoute>
+              </AdminRoute>
             } />
             
             <Route path="/admin/management" element={
-              <ProtectedRoute requireDoctor={true}>
+              <AdminRoute>
                 <>
                   <Header />
                   <AdminManagement />
                 </>
-              </ProtectedRoute>
+              </AdminRoute>
             } />
 
             <Route path="/doctor/appointments" element={

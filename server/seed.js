@@ -13,6 +13,15 @@ const seedDatabase = async () => {
 
     console.log('🗑️  Cleared existing data');
 
+    // Create admin account
+    const adminUser = await User.create({
+      name: 'System Administrator',
+      email: 'admin@curaline.com',
+      phone: '+63-917-000-0000',
+      password: 'admin123',
+      role: 'admin'
+    });
+
     // Create test patient
     const testPatient = await User.create({
       name: 'Test Patient',
@@ -125,7 +134,9 @@ const seedDatabase = async () => {
 
     console.log('✅ Created doctor profiles');
     console.log('\n📝 Login Credentials:');
-    console.log('\n👨‍⚕️ Doctor Accounts:');
+    console.log('\n👑 Admin Account (Full Access):');
+    console.log('   System Administrator: admin@curaline.com / admin123');
+    console.log('\n👨‍⚕️ Doctor Accounts (Doctor Dashboard Only):');
     console.log('   Dr. Sarah Johnson: sarah.johnson@curaline.com / sarah123');
     console.log('   Dr. Michael Chen: michael.chen@curaline.com / michael123');
     console.log('   Dr. Emily Rodriguez: emily.rodriguez@curaline.com / emily123');

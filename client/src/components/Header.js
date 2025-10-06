@@ -15,6 +15,10 @@ function Header() {
     return location.pathname === path ? 'active' : '';
   };
 
+  const isAdmin = () => {
+    return user?.role === 'admin';
+  };
+
   const handleLogout = () => {
     logout();
     navigate('/login');
@@ -44,16 +48,16 @@ function Header() {
             <span>Consultations</span>
           </Link>
           {isDoctor() && (
-            <>
-              <Link to="/doctor/appointments" className={`nav-link ${isActive('/doctor/appointments')}`}>
-                <Stethoscope size={20} />
-                <span>Appointments</span>
-              </Link>
-              <Link to="/admin" className={`nav-link ${isActive('/admin')}`}>
-                <LayoutDashboard size={20} />
-                <span>Admin</span>
-              </Link>
-            </>
+            <Link to="/doctor/appointments" className={`nav-link ${isActive('/doctor/appointments')}`}>
+              <Stethoscope size={20} />
+              <span>Appointments</span>
+            </Link>
+          )}
+          {isAdmin() && (
+            <Link to="/admin" className={`nav-link ${isActive('/admin')}`}>
+              <LayoutDashboard size={20} />
+              <span>Admin</span>
+            </Link>
           )}
         </nav>
         <div className="user-section">
@@ -62,6 +66,7 @@ function Header() {
             <button className="user-info" onClick={toggleDropdown}>
               <User size={18} />
               <span>{user?.name}</span>
+              {user?.role === 'admin' && <span className="role-badge admin">Admin</span>}
               {user?.role === 'doctor' && <span className="role-badge">Doctor</span>}
               <ChevronDown size={16} className={`dropdown-icon ${showDropdown ? 'open' : ''}`} />
             </button>

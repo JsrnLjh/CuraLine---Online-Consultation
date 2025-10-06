@@ -59,6 +59,12 @@
   flex-wrap: wrap;
 }
 
+.hero-buttons .btn {
+  padding: 14px 28px;
+  font-size: 16px;
+  white-space: nowrap;
+}
+
 .features {
   padding: 80px 20px;
   background: white;
@@ -71,9 +77,26 @@
   color: #1f2937;
 }
 
+.grid {
+  display: grid;
+  gap: 32px;
+}
+
+.grid-4 {
+  grid-template-columns: repeat(4, 1fr);
+}
+
 .feature-card {
   text-align: center;
   padding: 32px;
+  background: #f9fafb;
+  border-radius: 16px;
+  transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.feature-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
 }
 
 .feature-icon {
@@ -141,6 +164,12 @@
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
 }
 
+@media (max-width: 1200px) {
+  .grid-4 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
 @media (max-width: 768px) {
   .hero-content h1 {
     font-size: 32px;
@@ -153,5 +182,13 @@
   .features h2,
   .cta-content h2 {
     font-size: 28px;
+  }
+
+  .grid-4 {
+    grid-template-columns: 1fr;
+  }
+
+  .feature-card {
+    padding: 24px;
   }
 }
