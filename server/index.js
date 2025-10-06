@@ -1,15 +1,30 @@
 const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
-const { v4: uuidv4 } = require('uuid');
 require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Middleware
 app.use(cors());
 app.use(bodyParser.json());
+
+// Root route
+app.get('/', (req, res) => {
+  res.json({ 
+    message: 'CuraLine E-Health API',
+    version: '1.0.0',
+    status: 'running',
+    endpoints: {
+      health: '/api/health',
+      auth: '/api/auth/*',
+      doctors: '/api/doctors',
+      consultations: '/api/consultations',
+      analytics: '/api/analytics/*',
+      admin: '/api/admin/*'
+    }
+  });
+});
 
 // In-memory data storage (replace with database in production)
 const doctors = [
@@ -77,6 +92,37 @@ const doctors = [
 
 const consultations = [];
 const patients = [];
+const notifications = []; // Store notifications
+const prescriptions = []; // Store prescriptions
+const payments = []; // Store payment records
+const consultationMessages = {}; // Store chat messages by consultation ID
+
+// Helper function to create notification
+function createNotification(userId, type, title, message) {
+  const notification = {
+    id: `notif-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+    userId,
+    type, // 'booking', 'cancellation', 'reschedule', 'reminder', 'completion'
+    title,
+    message,
+    read: false,
+    createdAt: new Date().toISOString()
+  };
+  notifications.push(notification);
+  return notification;
+}
+
+// Helper function to send email (simulated)
+async function sendEmail(to, subject, html) {
+  // In production, use nodemailer or similar service
+  console.log('📧 Email sent to:', to);
+  console.log('Subject:', subject);
+  console.log('Content:', html);
+  
+  // Simulate email sending
+  return { success: true, messageId: `msg-${Date.now()}` };
+}
+
 const users = [
   // Default test accounts
   {
@@ -211,21 +257,53 @@ app.post('/api/consultations', (req, res) => {
   }
 
   const consultation = {
-    id: uuidv4(),
+    id: `consultation-${Date.now()}`,
+    doctorId,
     patientName,
     patientEmail,
     patientPhone,
-    doctorId,
     doctorName: doctor.name,
     doctorSpecialty: doctor.specialty,
+    consultationFee: doctor.consultationFee,
     date,
     time,
     symptoms,
     status: 'scheduled',
+    paymentStatus: 'pending', // 'pending', 'paid'
     createdAt: new Date().toISOString()
   };
 
   consultations.push(consultation);
+  
+  // Send notifications
+  // Find patient user ID (in real app, would be from auth)
+  const patientUser = users.find(u => u.email === patientEmail);
+  if (patientUser) {
+    createNotification(
+      patientUser.id,
+      'booking',
+      'Appointment Booked',
+      `Your consultation with ${doctor.name} on ${new Date(date).toLocaleDateString()} at ${time} has been confirmed.`
+    );
+    
+    // Send email
+    sendEmail(
+      patientEmail,
+      'Appointment Confirmation - CuraLine',
+      `
+        <h2>Appointment Confirmed</h2>
+        <p>Dear ${patientName},</p>
+        <p>Your consultation has been successfully booked.</p>
+        <p><strong>Doctor:</strong> ${doctor.name}</p>
+        <p><strong>Specialty:</strong> ${doctor.specialty}</p>
+        <p><strong>Date:</strong> ${new Date(date).toLocaleDateString()}</p>
+        <p><strong>Time:</strong> ${time}</p>
+        <p><strong>Fee:</strong> ₱${doctor.consultationFee}</p>
+        <p>Thank you for choosing CuraLine!</p>
+      `
+    );
+  }
+  
   res.status(201).json(consultation);
 });
 
@@ -250,7 +328,46 @@ app.patch('/api/consultations/:id', (req, res) => {
   const consultation = consultations.find(c => c.id === req.params.id);
   
   if (consultation) {
+    const oldStatus = consultation.status;
     consultation.status = status;
+    
+    // Send notifications based on status change
+    const patientUser = users.find(u => u.email === consultation.patientEmail);
+    
+    if (status === 'cancelled' && oldStatus !== 'cancelled') {
+      if (patientUser) {
+        createNotification(
+          patientUser.id,
+          'cancellation',
+          'Appointment Cancelled',
+          `Your consultation with ${consultation.doctorName} on ${new Date(consultation.date).toLocaleDateString()} has been cancelled.`
+        );
+        
+        sendEmail(
+          consultation.patientEmail,
+          'Appointment Cancelled - CuraLine',
+          `
+            <h2>Appointment Cancelled</h2>
+            <p>Dear ${consultation.patientName},</p>
+            <p>Your consultation has been cancelled.</p>
+            <p><strong>Doctor:</strong> ${consultation.doctorName}</p>
+            <p><strong>Date:</strong> ${new Date(consultation.date).toLocaleDateString()}</p>
+            <p><strong>Time:</strong> ${consultation.time}</p>
+            <p>If you did not request this cancellation, please contact us immediately.</p>
+          `
+        );
+      }
+    } else if (status === 'completed' && oldStatus !== 'completed') {
+      if (patientUser) {
+        createNotification(
+          patientUser.id,
+          'completion',
+          'Appointment Completed',
+          `Your consultation with ${consultation.doctorName} has been completed. Thank you for choosing CuraLine!`
+        );
+      }
+    }
+    
     res.json(consultation);
   } else {
     res.status(404).json({ message: 'Consultation not found' });
@@ -521,6 +638,308 @@ app.patch('/api/consultations/:id/reschedule', (req, res) => {
   consultation.date = date;
   consultation.time = time;
   consultation.rescheduledAt = new Date().toISOString();
+
+  // Send reschedule notification
+  const patientUser = users.find(u => u.email === consultation.patientEmail);
+  if (patientUser) {
+    createNotification(
+      patientUser.id,
+      'reschedule',
+      'Appointment Rescheduled',
+      `Your consultation with ${consultation.doctorName} has been rescheduled to ${new Date(date).toLocaleDateString()} at ${time}.`
+    );
+    
+    sendEmail(
+      consultation.patientEmail,
+      'Appointment Rescheduled - CuraLine',
+      `
+        <h2>Appointment Rescheduled</h2>
+        <p>Dear ${consultation.patientName},</p>
+        <p>Your consultation has been rescheduled.</p>
+        <p><strong>Doctor:</strong> ${consultation.doctorName}</p>
+        <p><strong>New Date:</strong> ${new Date(date).toLocaleDateString()}</p>
+        <p><strong>New Time:</strong> ${time}</p>
+        <p>Thank you for your understanding.</p>
+      `
+    );
+  }
+
+  res.json(consultation);
+});
+
+// Notification Endpoints
+
+// Get notifications for a user
+app.get('/api/notifications/:userId', (req, res) => {
+  const { userId } = req.params;
+  const userNotifications = notifications
+    .filter(n => n.userId === userId)
+    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  res.json(userNotifications);
+});
+
+// Mark notification as read
+app.patch('/api/notifications/:id/read', (req, res) => {
+  const { id } = req.params;
+  const notification = notifications.find(n => n.id === id);
+  
+  if (!notification) {
+    return res.status(404).json({ message: 'Notification not found' });
+  }
+  
+  notification.read = true;
+  res.json(notification);
+});
+
+// Mark all notifications as read for a user
+app.patch('/api/notifications/user/:userId/read-all', (req, res) => {
+  const { userId } = req.params;
+  
+  notifications.forEach(n => {
+    if (n.userId === userId) {
+      n.read = true;
+    }
+  });
+  
+  res.json({ message: 'All notifications marked as read' });
+});
+
+// Delete notification
+app.delete('/api/notifications/:id', (req, res) => {
+  const { id } = req.params;
+  const index = notifications.findIndex(n => n.id === id);
+  
+  if (index === -1) {
+    return res.status(404).json({ message: 'Notification not found' });
+  }
+  
+  notifications.splice(index, 1);
+  res.json({ message: 'Notification deleted' });
+});
+
+// Change password
+app.post('/api/auth/change-password', (req, res) => {
+  const { userId, currentPassword, newPassword } = req.body;
+
+  if (!userId || !currentPassword || !newPassword) {
+    return res.status(400).json({ message: 'Missing required fields' });
+  }
+
+  const user = users.find(u => u.id === userId);
+  
+  if (!user) {
+    return res.status(404).json({ message: 'User not found' });
+  }
+
+  // Verify current password
+  if (user.password !== currentPassword) {
+    return res.status(401).json({ message: 'Current password is incorrect' });
+  }
+
+  // Update password
+  user.password = newPassword;
+  
+  res.json({ message: 'Password changed successfully' });
+});
+
+// Payment Endpoints
+
+// Process payment for consultation
+app.post('/api/payments', (req, res) => {
+  const { consultationId, amount, method, cardDetails } = req.body;
+
+  if (!consultationId || !amount || !method) {
+    return res.status(400).json({ message: 'Missing required fields' });
+  }
+
+  const consultation = consultations.find(c => c.id === consultationId);
+  if (!consultation) {
+    return res.status(404).json({ message: 'Consultation not found' });
+  }
+
+  // Simulate payment processing
+  const payment = {
+    id: `pay-${Date.now()}`,
+    consultationId,
+    amount,
+    method, // 'card', 'gcash', 'paymaya', 'cash'
+    status: 'completed', // In real app: 'pending', 'completed', 'failed'
+    transactionId: `TXN-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+    createdAt: new Date().toISOString()
+  };
+
+  payments.push(payment);
+  
+  // Update consultation with payment info
+  consultation.paymentId = payment.id;
+  consultation.paymentStatus = 'paid';
+
+  res.status(201).json(payment);
+});
+
+// Get payment by consultation ID
+app.get('/api/payments/consultation/:consultationId', (req, res) => {
+  const { consultationId } = req.params;
+  const payment = payments.find(p => p.consultationId === consultationId);
+  
+  if (payment) {
+    res.json(payment);
+  } else {
+    res.status(404).json({ message: 'Payment not found' });
+  }
+});
+
+// Get all payments for a user
+app.get('/api/payments/user/:userId', (req, res) => {
+  const { userId } = req.params;
+  const user = users.find(u => u.id === userId);
+  
+  if (!user) {
+    return res.status(404).json({ message: 'User not found' });
+  }
+
+  const userConsultations = consultations.filter(c => c.patientEmail === user.email);
+  const userPayments = payments.filter(p => 
+    userConsultations.some(c => c.id === p.consultationId)
+  );
+
+  res.json(userPayments);
+});
+
+// Prescription Endpoints
+
+// Create prescription (Doctor only)
+app.post('/api/prescriptions', (req, res) => {
+  const { consultationId, medications, instructions, doctorId } = req.body;
+
+  if (!consultationId || !medications || !doctorId) {
+    return res.status(400).json({ message: 'Missing required fields' });
+  }
+
+  const consultation = consultations.find(c => c.id === consultationId);
+  if (!consultation) {
+    return res.status(404).json({ message: 'Consultation not found' });
+  }
+
+  const prescription = {
+    id: `rx-${Date.now()}`,
+    consultationId,
+    patientName: consultation.patientName,
+    patientEmail: consultation.patientEmail,
+    doctorId,
+    doctorName: consultation.doctorName,
+    medications, // Array of { name, dosage, frequency, duration }
+    instructions,
+    createdAt: new Date().toISOString()
+  };
+
+  prescriptions.push(prescription);
+  
+  // Update consultation with prescription
+  consultation.prescriptionId = prescription.id;
+
+  // Send notification to patient
+  const patientUser = users.find(u => u.email === consultation.patientEmail);
+  if (patientUser) {
+    createNotification(
+      patientUser.id,
+      'prescription',
+      'Prescription Available',
+      `Dr. ${consultation.doctorName} has issued a prescription for your consultation.`
+    );
+  }
+
+  res.status(201).json(prescription);
+});
+
+// Get prescriptions for a consultation
+app.get('/api/prescriptions/consultation/:consultationId', (req, res) => {
+  const { consultationId } = req.params;
+  const prescription = prescriptions.find(p => p.consultationId === consultationId);
+  
+  if (prescription) {
+    res.json(prescription);
+  } else {
+    res.status(404).json({ message: 'Prescription not found' });
+  }
+});
+
+// Get all prescriptions for a user
+app.get('/api/prescriptions/user/:userId', (req, res) => {
+  const { userId } = req.params;
+  const user = users.find(u => u.id === userId);
+  
+  if (!user) {
+    return res.status(404).json({ message: 'User not found' });
+  }
+
+  const userPrescriptions = prescriptions.filter(p => p.patientEmail === user.email);
+  res.json(userPrescriptions);
+});
+
+// Update prescription
+app.put('/api/prescriptions/:id', (req, res) => {
+  const { id } = req.params;
+  const { medications, instructions } = req.body;
+
+  const prescription = prescriptions.find(p => p.id === id);
+  
+  if (!prescription) {
+    return res.status(404).json({ message: 'Prescription not found' });
+  }
+
+  prescription.medications = medications || prescription.medications;
+  prescription.instructions = instructions || prescription.instructions;
+  prescription.updatedAt = new Date().toISOString();
+
+  res.json(prescription);
+});
+
+// Consultation Room Endpoints (Video Call & Chat)
+
+// Get messages for a consultation
+app.get('/api/consultation-room/:consultationId/messages', (req, res) => {
+  const { consultationId } = req.params;
+  const messages = consultationMessages[consultationId] || [];
+  res.json(messages);
+});
+
+// Send message in consultation room
+app.post('/api/consultation-room/:consultationId/messages', (req, res) => {
+  const { consultationId } = req.params;
+  const { senderId, senderName, message, timestamp } = req.body;
+
+  if (!senderId || !senderName || !message) {
+    return res.status(400).json({ message: 'Missing required fields' });
+  }
+
+  const newMessage = {
+    id: `msg-${Date.now()}`,
+    senderId,
+    senderName,
+    message,
+    timestamp: timestamp || new Date().toISOString()
+  };
+
+  if (!consultationMessages[consultationId]) {
+    consultationMessages[consultationId] = [];
+  }
+
+  consultationMessages[consultationId].push(newMessage);
+  res.status(201).json(newMessage);
+});
+
+// Start consultation (update status to in-progress)
+app.patch('/api/consultation-room/:consultationId/start', (req, res) => {
+  const { consultationId } = req.params;
+  const consultation = consultations.find(c => c.id === consultationId);
+
+  if (!consultation) {
+    return res.status(404).json({ message: 'Consultation not found' });
+  }
+
+  consultation.status = 'in-progress';
+  consultation.startedAt = new Date().toISOString();
 
   res.json(consultation);
 });

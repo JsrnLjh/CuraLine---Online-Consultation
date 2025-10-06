@@ -1,15 +1,21 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { Calendar, Clock, User, FileText, XCircle, AlertCircle, Edit3 } from 'lucide-react';
+import { Calendar, Clock, User, FileText, XCircle, AlertCircle, Edit3, Video } from 'lucide-react';
 import './MyConsultations.css';
 
 function MyConsultations() {
+  const navigate = useNavigate();
   const [consultations, setConsultations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [cancellingId, setCancellingId] = useState(null);
   const [reschedulingId, setReschedulingId] = useState(null);
   const [rescheduleData, setRescheduleData] = useState({ date: '', time: '' });
   const [availableTimes] = useState(['09:00', '10:00', '11:00', '13:00', '14:00', '15:00', '16:00']);
+
+  const joinCall = (consultationId) => {
+    navigate(`/consultation-room/${consultationId}`);
+  };
 
   useEffect(() => {
     fetchConsultations();
@@ -152,6 +158,16 @@ function MyConsultations() {
 
                 {consultation.status === 'scheduled' && (
                   <>
+                    <div className="consultation-actions">
+                      <button 
+                        onClick={() => joinCall(consultation.id)}
+                        className="btn-join-call"
+                      >
+                        <Video size={18} />
+                        Join Video Call
+                      </button>
+                    </div>
+
                     {reschedulingId === consultation.id ? (
                       <div className="reschedule-form">
                         <h4>Reschedule Appointment</h4>

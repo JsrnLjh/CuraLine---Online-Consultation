@@ -127,7 +127,7 @@ function Register() {
                 name="phone"
                 value={formData.phone}
                 onChange={handleChange}
-                placeholder="+1 (555) 000-0000"
+                placeholder="+63 (123) 456-7890"
               />
             </div>
 

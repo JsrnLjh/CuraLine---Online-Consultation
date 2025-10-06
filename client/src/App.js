@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import './App.css';
 import { AuthProvider } from './context/AuthContext';
+import { NotificationProvider } from './context/NotificationContext';
 import Header from './components/Header';
 import ProtectedRoute from './components/ProtectedRoute';
 import Login from './pages/Login';
@@ -12,13 +13,17 @@ import BookConsultation from './pages/BookConsultation';
 import MyConsultations from './pages/MyConsultations';
 import AdminDashboard from './pages/AdminDashboard';
 import AdminManagement from './pages/AdminManagement';
+import DoctorDashboard from './pages/DoctorDashboard';
+import Profile from './pages/Profile';
+import ConsultationRoom from './pages/ConsultationRoom';
 
 function App() {
   return (
     <AuthProvider>
-      <Router>
-        <div className="App">
-          <Routes>
+      <NotificationProvider>
+        <Router>
+          <div className="App">
+            <Routes>
             {/* Public routes */}
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
@@ -78,9 +83,36 @@ function App() {
                 </>
               </ProtectedRoute>
             } />
-          </Routes>
-        </div>
-      </Router>
+
+            <Route path="/doctor/appointments" element={
+              <ProtectedRoute requireDoctor={true}>
+                <>
+                  <Header />
+                  <DoctorDashboard />
+                </>
+              </ProtectedRoute>
+            } />
+
+            {/* Profile route (all authenticated users) */}
+            <Route path="/profile" element={
+              <ProtectedRoute>
+                <>
+                  <Header />
+                  <Profile />
+                </>
+              </ProtectedRoute>
+            } />
+
+            {/* Consultation Room (Video Call & Chat) */}
+            <Route path="/consultation-room/:consultationId" element={
+              <ProtectedRoute>
+                <ConsultationRoom />
+              </ProtectedRoute>
+            } />
+            </Routes>
+          </div>
+        </Router>
+      </NotificationProvider>
     </AuthProvider>
   );
 }
