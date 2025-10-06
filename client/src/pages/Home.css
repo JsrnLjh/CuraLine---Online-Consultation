@@ -142,6 +142,9 @@
 
 .cta-content {
   text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .cta-content h2 {
@@ -158,6 +161,9 @@
 .cta .btn-primary {
   background: white;
   color: #667eea;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .cta .btn-primary:hover {
