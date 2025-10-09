@@ -1,8 +1,12 @@
 const express = require('express');
+const http = require('http');
+const socketIo = require('socket.io');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 require('dotenv').config();
 const connectDB = require('./config/database');
+const { initializeEmailService, sendEmail, emailTemplates } = require('./services/emailService');
+const { setupSocketServer } = require('./services/socketService');
 
 // Import models
 const User = require('./models/User');
@@ -19,21 +23,29 @@ const Expense = require('./models/Expense');
 const Payroll = require('./models/Payroll');
 
 const app = express();
+const server = http.createServer(app);
+const io = socketIo(server, {
+  cors: {
+    origin: process.env.CLIENT_URL || 'http://localhost:3000',
+    methods: ['GET', 'POST']
+  }
+});
+
 const PORT = process.env.PORT || 5000;
 
 // Connect to MongoDB
 connectDB();
 
+// Initialize Email Service
+initializeEmailService();
+
+// Setup Socket.io for WebRTC
+setupSocketServer(io);
+
 app.use(cors());
 app.use(bodyParser.json());
 
-// Helper function to send email (simulated)
-async function sendEmail(to, subject, html) {
-  console.log('📧 Email sent to:', to);
-  console.log('Subject:', subject);
-  console.log('Content:', html);
-  return { success: true, messageId: `msg-${Date.now()}` };
-}
+// Email service is now imported from services/emailService.js
 
 // Root route
 app.get('/', (req, res) => {
@@ -234,22 +246,13 @@ app.post('/api/auth/forgot-password', async (req, res) => {
     });
 
     // Send email with reset link
-    const resetLink = `http://localhost:3000/reset-password/${resetToken}`;
-    sendEmail(
-      user.email,
-      'Password Reset Request - CuraLine',
-      `
-        <h2>Password Reset Request</h2>
-        <p>Hello ${user.name},</p>
-        <p>You requested to reset your password. Click the link below to reset it:</p>
-        <p><a href="${resetLink}" style="display: inline-block; padding: 12px 24px; background: #667eea; color: white; text-decoration: none; border-radius: 6px;">Reset Password</a></p>
-        <p>Or copy and paste this link into your browser:</p>
-        <p>${resetLink}</p>
-        <p>This link will expire in 1 hour.</p>
-        <p>If you didn't request this, please ignore this email.</p>
-        <p>Best regards,<br>CuraLine Team</p>
-      `
-    );
+    const resetLink = `${process.env.CLIENT_URL || 'http://localhost:3000'}/reset-password/${resetToken}`;
+    const emailContent = emailTemplates.passwordReset({ resetLink });
+    sendEmail({
+      to: user.email,
+      subject: emailContent.subject,
+      html: emailContent.html
+    });
 
     res.json({ message: 'If that email exists, a reset link has been sent' });
   } catch (err) {
@@ -428,21 +431,19 @@ app.post('/api/consultations', async (req, res) => {
       });
       
       // Send email
-      sendEmail(
-        patientEmail,
-        'Appointment Confirmation - CuraLine',
-        `
-          <h2>Appointment Confirmed</h2>
-          <p>Dear ${patientName},</p>
-          <p>Your consultation has been successfully booked.</p>
-          <p><strong>Doctor:</strong> ${doctor.name}</p>
-          <p><strong>Specialty:</strong> ${doctor.specialty}</p>
-          <p><strong>Date:</strong> ${new Date(date).toLocaleDateString()}</p>
-          <p><strong>Time:</strong> ${time}</p>
-          <p><strong>Fee:</strong> ₱${doctor.consultationFee}</p>
-          <p>Thank you for choosing CuraLine!</p>
-        `
-      );
+      const emailContent = emailTemplates.bookingConfirmation({
+        patientName,
+        doctorName: doctor.name,
+        specialty: doctor.specialty,
+        date: new Date(date).toLocaleDateString(),
+        time,
+        fee: doctor.consultationFee
+      });
+      sendEmail({
+        to: patientEmail,
+        subject: emailContent.subject,
+        html: emailContent.html
+      });
     }
     
     // Format consultation response with 'id' field
@@ -986,6 +987,17 @@ app.post('/api/prescriptions', async (req, res) => {
         type: 'prescription',
         title: 'Prescription Available',
         message: `Dr. ${consultation.doctorName} has issued a prescription for your consultation.`
+      });
+      
+      // Send email notification
+      const emailContent = emailTemplates.prescriptionIssued({
+        patientName: consultation.patientName,
+        doctorName: consultation.doctorName
+      });
+      sendEmail({
+        to: consultation.patientEmail,
+        subject: emailContent.subject,
+        html: emailContent.html
       });
     }
 
@@ -1816,9 +1828,10 @@ app.get('/api/analytics/dashboard', async (req, res) => {
   }
 });
 
-app.listen(PORT, () => {
+server.listen(PORT, () => {
   console.log(`🚀 Server is running on port ${PORT}`);
   console.log(`📊 Using MongoDB database`);
+  console.log(`🔌 Socket.io server ready for WebRTC signaling`);
   
   // Start the daily reset scheduler
   scheduleDailyReset();

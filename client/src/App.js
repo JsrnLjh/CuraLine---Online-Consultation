@@ -16,7 +16,7 @@ import AdminManagement from './pages/AdminManagement';
 import AdminAnalytics from './pages/AdminAnalytics';
 import DoctorDashboard from './pages/DoctorDashboard';
 import Profile from './pages/Profile';
-import ConsultationRoom from './pages/ConsultationRoom';
+import ConsultationRoom from './pages/ConsultationRoomWebRTC';
 import Payment from './pages/Payment';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
