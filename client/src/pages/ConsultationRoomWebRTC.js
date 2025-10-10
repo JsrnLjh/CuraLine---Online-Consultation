@@ -9,15 +9,48 @@ import {
 import { useAuth } from '../context/AuthContext';
 import './ConsultationRoom.css';
 
-const SOCKET_SERVER = process.env.REACT_APP_SOCKET_URL || 'http://localhost:5000';
+// Get socket server URL from environment or detect from window location
+const getSocketServerUrl = () => {
+  if (process.env.REACT_APP_SOCKET_URL) {
+    return process.env.REACT_APP_SOCKET_URL;
+  }
+  // In production, use the same host as the client
+  if (process.env.NODE_ENV === 'production') {
+    return window.location.origin;
+  }
+  // In development, try to use the local network IP if available
+  return 'http://localhost:5000';
+};
 
-// ICE servers for WebRTC (STUN servers)
+const SOCKET_SERVER = getSocketServerUrl();
+
+// ICE servers for WebRTC (STUN and TURN servers for NAT traversal)
 const ICE_SERVERS = {
   iceServers: [
+    // Google STUN servers
     { urls: 'stun:stun.l.google.com:19302' },
     { urls: 'stun:stun1.l.google.com:19302' },
-    { urls: 'stun:stun2.l.google.com:19302' }
-  ]
+    { urls: 'stun:stun2.l.google.com:19302' },
+    { urls: 'stun:stun3.l.google.com:19302' },
+    { urls: 'stun:stun4.l.google.com:19302' },
+    // Public TURN servers (for testing - replace with your own in production)
+    {
+      urls: 'turn:openrelay.metered.ca:80',
+      username: 'openrelayproject',
+      credential: 'openrelayproject'
+    },
+    {
+      urls: 'turn:openrelay.metered.ca:443',
+      username: 'openrelayproject',
+      credential: 'openrelayproject'
+    },
+    {
+      urls: 'turn:openrelay.metered.ca:443?transport=tcp',
+      username: 'openrelayproject',
+      credential: 'openrelayproject'
+    }
+  ],
+  iceCandidatePoolSize: 10
 };
 
 function ConsultationRoomWebRTC() {
@@ -71,13 +104,20 @@ function ConsultationRoomWebRTC() {
 
   const initializeSocketAndMedia = async () => {
     try {
+      console.log('🔌 Connecting to socket server:', SOCKET_SERVER);
+      
       // Initialize Socket.io connection
       socketRef.current = io(SOCKET_SERVER, {
-        transports: ['websocket', 'polling']
+        transports: ['websocket', 'polling'],
+        reconnection: true,
+        reconnectionAttempts: 5,
+        reconnectionDelay: 1000,
+        timeout: 20000
       });
 
       socketRef.current.on('connect', () => {
-        console.log('✅ Connected to signaling server');
+        console.log('✅ Connected to signaling server:', socketRef.current.id);
+        console.log('🌐 Socket transport:', socketRef.current.io.engine.transport.name);
         setConnectionStatus('connected');
         
         // Join the consultation room
@@ -89,9 +129,24 @@ function ConsultationRoomWebRTC() {
         });
       });
 
-      socketRef.current.on('disconnect', () => {
-        console.log('❌ Disconnected from signaling server');
+      socketRef.current.on('connect_error', (error) => {
+        console.error('❌ Socket connection error:', error.message);
+        console.error('Server URL:', SOCKET_SERVER);
+        setConnectionStatus('error');
+      });
+
+      socketRef.current.on('disconnect', (reason) => {
+        console.log('❌ Disconnected from signaling server. Reason:', reason);
         setConnectionStatus('disconnected');
+      });
+
+      socketRef.current.on('reconnect_attempt', (attemptNumber) => {
+        console.log(`🔄 Reconnection attempt ${attemptNumber}...`);
+      });
+
+      socketRef.current.on('reconnect', (attemptNumber) => {
+        console.log(`✅ Reconnected after ${attemptNumber} attempts`);
+        setConnectionStatus('connected');
       });
 
       // Handle room participants
@@ -156,13 +211,17 @@ function ConsultationRoomWebRTC() {
       await initializeMedia();
 
     } catch (err) {
-      console.error('Failed to initialize:', err);
+      console.error('❌ Failed to initialize:', err);
+      console.error('Error details:', err.message);
       setConnectionStatus('error');
+      alert(`Connection failed: ${err.message}. Please check your network and try again.`);
     }
   };
 
   const createPeerConnection = async (targetSocketId) => {
     try {
+      console.log('🔗 Creating peer connection with ICE servers:', ICE_SERVERS);
+      
       // Create new peer connection
       peerConnectionRef.current = new RTCPeerConnection(ICE_SERVERS);
 
@@ -196,12 +255,37 @@ function ConsultationRoomWebRTC() {
 
       // Handle connection state changes
       peerConnectionRef.current.onconnectionstatechange = () => {
-        console.log('Connection state:', peerConnectionRef.current.connectionState);
-        if (peerConnectionRef.current.connectionState === 'connected') {
+        const state = peerConnectionRef.current.connectionState;
+        console.log('🔗 Peer connection state:', state);
+        
+        if (state === 'connected') {
+          console.log('✅ Peer connection established successfully!');
           setConnectionStatus('connected');
-        } else if (peerConnectionRef.current.connectionState === 'disconnected') {
+        } else if (state === 'disconnected') {
+          console.log('⚠️ Peer connection disconnected');
           setConnectionStatus('disconnected');
+        } else if (state === 'failed') {
+          console.error('❌ Peer connection failed');
+          setConnectionStatus('error');
+        } else if (state === 'connecting') {
+          console.log('🔄 Peer connection attempting to connect...');
+          setConnectionStatus('connecting');
         }
+      };
+
+      // Handle ICE connection state changes
+      peerConnectionRef.current.oniceconnectionstatechange = () => {
+        const iceState = peerConnectionRef.current.iceConnectionState;
+        console.log('🧊 ICE connection state:', iceState);
+        
+        if (iceState === 'failed' || iceState === 'disconnected') {
+          console.error('❌ ICE connection issue. May need TURN server.');
+        }
+      };
+
+      // Handle ICE gathering state
+      peerConnectionRef.current.onicegatheringstatechange = () => {
+        console.log('🧊 ICE gathering state:', peerConnectionRef.current.iceGatheringState);
       };
 
       console.log('✅ Peer connection created');

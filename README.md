@@ -111,6 +111,24 @@ npm run client
 ```
 Client will run on http://localhost:3000
 
+### Testing WebRTC Video Consultations Between Devices
+
+For testing video consultations on different devices (phones, tablets, other computers):
+
+**Quick Start:**
+```bash
+# Run the testing setup helper
+START_FOR_TESTING.bat
+
+# Or run diagnostics
+npm run test-connection
+```
+
+**See detailed guides:**
+- 📘 **[Quick Fix Guide](QUICK_FIX_GUIDE.md)** - Fast troubleshooting
+- 📗 **[WebRTC Setup Guide](WEBRTC_SETUP_GUIDE.md)** - Comprehensive instructions
+- 📙 **[Fixes Summary](WEBRTC_FIXES_SUMMARY.md)** - What was fixed and why
+
 ## Usage
 
 ### Getting Started
