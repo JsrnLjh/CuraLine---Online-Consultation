@@ -4,9 +4,11 @@
   "description": "Electronic Health Online Consultation System",
   "main": "server/index.js",
   "scripts": {
+    "start": "node server/index.js",
     "server": "node server/index.js",
     "client": "cd client && npm start",
     "dev": "concurrently \"npm run server\" \"npm run client\"",
+    "build": "cd client && npm install && npm run build",
     "install-all": "npm install && cd client && npm install",
     "seed": "node server/seed.js"
   },

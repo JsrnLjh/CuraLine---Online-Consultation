@@ -1828,10 +1828,24 @@ app.get('/api/analytics/dashboard', async (req, res) => {
   }
 });
 
+// Serve static files from React build in production
+if (process.env.NODE_ENV === 'production') {
+  const path = require('path');
+  
+  // Serve static files
+  app.use(express.static(path.join(__dirname, '../client/build')));
+  
+  // Handle React routing - return all requests to React app
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, '../client/build/index.html'));
+  });
+}
+
 server.listen(PORT, () => {
   console.log(`🚀 Server is running on port ${PORT}`);
   console.log(`📊 Using MongoDB database`);
   console.log(`🔌 Socket.io server ready for WebRTC signaling`);
+  console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
   
   // Start the daily reset scheduler
   scheduleDailyReset();
