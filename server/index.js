@@ -45,10 +45,14 @@ setupSocketServer(io);
 app.use(cors());
 app.use(bodyParser.json());
 
-// Email service is now imported from services/emailService.js
+// Serve static files from React build in production
+if (process.env.NODE_ENV === 'production') {
+  const path = require('path');
+  app.use(express.static(path.join(__dirname, '../client/build')));
+}
 
-// Root route
-app.get('/', (req, res) => {
+// API Health check route
+app.get('/api/health', (req, res) => {
   res.json({ 
     message: 'CuraLine E-Health API with MongoDB',
     version: '2.0.0',
@@ -1828,14 +1832,9 @@ app.get('/api/analytics/dashboard', async (req, res) => {
   }
 });
 
-// Serve static files from React build in production
+// Handle React routing - return all requests to React app (must be last!)
 if (process.env.NODE_ENV === 'production') {
   const path = require('path');
-  
-  // Serve static files
-  app.use(express.static(path.join(__dirname, '../client/build')));
-  
-  // Handle React routing - return all requests to React app
   app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, '../client/build/index.html'));
   });
