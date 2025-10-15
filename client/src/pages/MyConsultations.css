@@ -130,20 +130,28 @@
   transform: translateY(-1px);
 }
 
+.consultation-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
 .btn-join-call {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
-  padding: 12px 24px;
+  padding: 14px 24px;
   background: linear-gradient(135deg, #10b981 0%, #059669 100%);
   color: white;
   border: none;
   border-radius: 8px;
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
-  margin-bottom: 12px;
+  width: 100%;
+  min-height: 48px;
 }
 
 .btn-join-call:hover {
@@ -154,16 +162,19 @@
 .btn-reschedule {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
-  padding: 10px 20px;
+  padding: 12px 20px;
   background: white;
   border: 2px solid #667eea;
   color: #667eea;
   border-radius: 8px;
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
+  flex: 1;
+  min-height: 48px;
 }
 
 .btn-reschedule:hover {
@@ -174,16 +185,19 @@
 .btn-cancel {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
-  padding: 10px 20px;
+  padding: 12px 20px;
   background: white;
   border: 2px solid #dc2626;
   color: #dc2626;
   border-radius: 8px;
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
+  flex: 1;
+  min-height: 48px;
 }
 
 .btn-cancel:hover:not(:disabled) {
@@ -252,15 +266,19 @@
 
 .btn-reschedule-confirm {
   flex: 1;
-  padding: 10px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 20px;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
   border: none;
   border-radius: 8px;
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
+  min-height: 48px;
 }
 
 .btn-reschedule-confirm:hover {
@@ -269,15 +287,19 @@
 }
 
 .btn-reschedule-cancel {
-  padding: 10px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 20px;
   background: white;
   color: #6b7280;
   border: 2px solid #e5e7eb;
   border-radius: 8px;
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
+  min-height: 48px;
 }
 
 .btn-reschedule-cancel:hover {
@@ -303,6 +325,11 @@
     grid-template-columns: 1fr;
     max-width: 800px;
   }
+
+  .consultation-details {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
 }
 
 @media (max-width: 768px) {
@@ -313,5 +340,27 @@
   .consultation-header {
     flex-direction: column;
     gap: 12px;
+  }
+
+  .consultation-actions {
+    flex-direction: column;
+  }
+
+  .btn-reschedule,
+  .btn-cancel {
+    width: 100%;
+  }
+
+  .reschedule-inputs {
+    grid-template-columns: 1fr;
+  }
+
+  .reschedule-actions {
+    flex-direction: column;
+  }
+
+  .btn-reschedule-confirm,
+  .btn-reschedule-cancel {
+    width: 100%;
   }
 }
