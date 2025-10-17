@@ -23,6 +23,15 @@ A modern, full-stack electronic health consultation platform that connects patie
 - 📈 **Performance Metrics** - Track consultations by doctor and specialty
 - 📋 **Status Overview** - Monitor scheduled, completed, and cancelled appointments
 
+### Video Consultation Features
+- 🎥 **WebRTC Video Calls** - Real-time video consultations with doctors
+- 📱 **Mobile Optimized** - Full support for iOS and Android devices
+- 🔄 **Camera Flip** - Switch between front and back camera on mobile
+- 🎤 **Audio Controls** - Mute/unmute microphone during calls
+- 📹 **Video Controls** - Turn camera on/off as needed
+- 💬 **In-Call Chat** - Text messaging during video consultations
+- 🖥️ **Screen Sharing** - Share screen for better communication
+
 ### General Features
 - 💻 **Modern UI** - Beautiful, responsive interface built with React
 - 🎨 **CuraLine Branding** - Professional logo and consistent design
@@ -103,7 +112,7 @@ npm run dev
 ```bash
 npm run server
 ```
-Server will run on http://localhost:5000
+Server will run on http://localhos t:5000
 
 **Terminal 2 - Start the React frontend:**
 ```bash
@@ -128,6 +137,7 @@ npm run test-connection
 - 📘 **[Quick Fix Guide](QUICK_FIX_GUIDE.md)** - Fast troubleshooting
 - 📗 **[WebRTC Setup Guide](WEBRTC_SETUP_GUIDE.md)** - Comprehensive instructions
 - 📙 **[Fixes Summary](WEBRTC_FIXES_SUMMARY.md)** - What was fixed and why
+- 📱 **[Mobile Video Guide](MOBILE_VIDEO_GUIDE.md)** - Mobile testing & troubleshooting (NEW!)
 
 ## Usage
 

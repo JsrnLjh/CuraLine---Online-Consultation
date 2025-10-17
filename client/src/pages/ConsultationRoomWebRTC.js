@@ -69,6 +69,8 @@ function ConsultationRoomWebRTC() {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState('connecting');
   const [remoteUser, setRemoteUser] = useState(null);
+  const [isMobile, setIsMobile] = useState(false);
+  const [cameraFacing, setCameraFacing] = useState('user'); // 'user' for front, 'environment' for back
   
   const localVideoRef = useRef(null);
   const remoteVideoRef = useRef(null);
@@ -79,6 +81,14 @@ function ConsultationRoomWebRTC() {
   const peerConnectionRef = useRef(null);
 
   useEffect(() => {
+    // Detect if device is mobile
+    const checkMobile = () => {
+      const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      setIsMobile(isMobileDevice);
+      console.log('📱 Mobile device detected:', isMobileDevice);
+    };
+    
+    checkMobile();
     fetchConsultation();
     initializeSocketAndMedia();
     
@@ -233,11 +243,44 @@ function ConsultationRoomWebRTC() {
       }
 
       // Handle incoming remote stream
-      peerConnectionRef.current.ontrack = (event) => {
+      peerConnectionRef.current.ontrack = async (event) => {
         console.log('📹 Received remote stream');
         if (remoteVideoRef.current && event.streams[0]) {
-          remoteVideoRef.current.srcObject = event.streams[0];
+          const remoteVideoElement = remoteVideoRef.current;
+          
+          // Critical for mobile: set attributes before srcObject
+          remoteVideoElement.setAttribute('playsinline', 'true');
+          remoteVideoElement.setAttribute('autoplay', 'true');
+          
+          remoteVideoElement.srcObject = event.streams[0];
           remoteStreamRef.current = event.streams[0];
+          
+          // Force play on mobile
+          try {
+            await remoteVideoElement.play();
+            console.log('✅ Remote video playing');
+          } catch (playError) {
+            console.warn('⚠️ Remote video autoplay prevented:', playError);
+            // Retry on user interaction
+            const playRemoteOnInteraction = async () => {
+              try {
+                await remoteVideoElement.play();
+                console.log('✅ Remote video playing after user interaction');
+                document.removeEventListener('click', playRemoteOnInteraction);
+                document.removeEventListener('touchstart', playRemoteOnInteraction);
+              } catch (err) {
+                console.error('Failed to play remote video:', err);
+              }
+            };
+            document.addEventListener('click', playRemoteOnInteraction, { once: true });
+            document.addEventListener('touchstart', playRemoteOnInteraction, { once: true });
+          }
+          
+          console.log('📹 Remote video tracks:', event.streams[0].getVideoTracks().map(t => ({
+            label: t.label,
+            enabled: t.enabled,
+            readyState: t.readyState
+          })));
         }
       };
 
@@ -348,20 +391,117 @@ function ConsultationRoomWebRTC() {
 
   const initializeMedia = async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: true,
-        audio: true
-      });
+      console.log('🎥 Initializing media with mobile optimizations...');
+      
+      // Mobile-optimized video constraints
+      const videoConstraints = isMobile ? {
+        facingMode: cameraFacing,
+        width: { ideal: 1280, max: 1920 },
+        height: { ideal: 720, max: 1080 },
+        frameRate: { ideal: 30, max: 30 }
+      } : {
+        width: { ideal: 1280, max: 1920 },
+        height: { ideal: 720, max: 1080 },
+        frameRate: { ideal: 30, max: 30 }
+      };
+
+      const constraints = {
+        video: videoConstraints,
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true
+        }
+      };
+
+      console.log('📋 Media constraints:', constraints);
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
       
       localStreamRef.current = stream;
+      
+      // Enhanced video element setup for mobile
       if (localVideoRef.current) {
-        localVideoRef.current.srcObject = stream;
+        const videoElement = localVideoRef.current;
+        
+        // Critical for mobile: set attributes before srcObject
+        videoElement.setAttribute('playsinline', 'true');
+        videoElement.setAttribute('autoplay', 'true');
+        videoElement.setAttribute('muted', 'true');
+        
+        videoElement.srcObject = stream;
+        
+        // Force play on mobile (handle autoplay restrictions)
+        try {
+          await videoElement.play();
+          console.log('✅ Local video playing');
+        } catch (playError) {
+          console.warn('⚠️ Autoplay prevented, will retry on user interaction:', playError);
+          // Add click listener to start video on user interaction
+          const playOnInteraction = async () => {
+            try {
+              await videoElement.play();
+              console.log('✅ Local video playing after user interaction');
+              document.removeEventListener('click', playOnInteraction);
+              document.removeEventListener('touchstart', playOnInteraction);
+            } catch (err) {
+              console.error('Failed to play video:', err);
+            }
+          };
+          document.addEventListener('click', playOnInteraction, { once: true });
+          document.addEventListener('touchstart', playOnInteraction, { once: true });
+        }
       }
       
       console.log('✅ Local media initialized');
+      console.log('📹 Video tracks:', stream.getVideoTracks().map(t => ({
+        label: t.label,
+        enabled: t.enabled,
+        readyState: t.readyState,
+        settings: t.getSettings()
+      })));
+      console.log('🎤 Audio tracks:', stream.getAudioTracks().map(t => ({
+        label: t.label,
+        enabled: t.enabled,
+        readyState: t.readyState
+      })));
+      
     } catch (err) {
-      console.error('Failed to get media:', err);
-      alert('Could not access camera/microphone. Please check permissions.');
+      console.error('❌ Failed to get media:', err);
+      console.error('Error name:', err.name);
+      console.error('Error message:', err.message);
+      
+      let errorMessage = 'Could not access camera/microphone. ';
+      
+      if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+        errorMessage += 'Please allow camera and microphone permissions in your browser settings.';
+      } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
+        errorMessage += 'No camera or microphone found on your device.';
+      } else if (err.name === 'NotReadableError' || err.name === 'TrackStartError') {
+        errorMessage += 'Camera/microphone is already in use by another application.';
+      } else if (err.name === 'OverconstrainedError') {
+        errorMessage += 'Camera does not support the requested settings. Trying with basic settings...';
+        // Retry with basic constraints
+        try {
+          const basicStream = await navigator.mediaDevices.getUserMedia({
+            video: true,
+            audio: true
+          });
+          localStreamRef.current = basicStream;
+          if (localVideoRef.current) {
+            localVideoRef.current.setAttribute('playsinline', 'true');
+            localVideoRef.current.srcObject = basicStream;
+            await localVideoRef.current.play();
+          }
+          console.log('✅ Media initialized with basic constraints');
+          return;
+        } catch (retryErr) {
+          console.error('❌ Retry failed:', retryErr);
+        }
+      } else {
+        errorMessage += err.message;
+      }
+      
+      alert(errorMessage);
     }
   };
 
@@ -392,6 +532,60 @@ function ConsultationRoomWebRTC() {
           enabled: audioTrack.enabled
         });
       }
+    }
+  };
+
+  const flipCamera = async () => {
+    if (!isMobile) return;
+    
+    try {
+      console.log('🔄 Flipping camera...');
+      
+      // Toggle camera facing mode
+      const newFacing = cameraFacing === 'user' ? 'environment' : 'user';
+      setCameraFacing(newFacing);
+      
+      // Stop current video track
+      if (localStreamRef.current) {
+        localStreamRef.current.getVideoTracks().forEach(track => track.stop());
+      }
+      
+      // Get new stream with flipped camera
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { 
+          facingMode: newFacing,
+          width: { ideal: 1280, max: 1920 },
+          height: { ideal: 720, max: 1080 }
+        },
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true
+        }
+      });
+      
+      // Update local stream
+      localStreamRef.current = stream;
+      
+      // Update local video element
+      if (localVideoRef.current) {
+        localVideoRef.current.srcObject = stream;
+        await localVideoRef.current.play();
+      }
+      
+      // Replace video track in peer connection
+      if (peerConnectionRef.current) {
+        const videoTrack = stream.getVideoTracks()[0];
+        const sender = peerConnectionRef.current.getSenders().find(s => s.track?.kind === 'video');
+        if (sender) {
+          await sender.replaceTrack(videoTrack);
+        }
+      }
+      
+      console.log('✅ Camera flipped to:', newFacing);
+    } catch (err) {
+      console.error('❌ Failed to flip camera:', err);
+      alert('Could not switch camera. Please check camera permissions.');
     }
   };
 
@@ -502,6 +696,7 @@ function ConsultationRoomWebRTC() {
               ref={remoteVideoRef} 
               autoPlay 
               playsInline
+              muted={false}
               className="remote-video"
             />
             {!remoteUser && (
@@ -526,6 +721,15 @@ function ConsultationRoomWebRTC() {
               className="local-video"
             />
             <div className="local-user-label">You</div>
+            {isMobile && (
+              <button 
+                className="flip-camera-btn"
+                onClick={flipCamera}
+                title="Flip camera"
+              >
+                🔄
+              </button>
+            )}
           </div>
 
           <div className="video-controls">
